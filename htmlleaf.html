@@ -4,9 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HTMLLeaf</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
+
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--green:#4caf50;--green-dk:#388e3c;--bg:#1e1e1e;--sb:#252526;--eb:#1e1e1e;--bdr:#3e3e3e;--txt:#d4d4d4;--mut:#666;}
@@ -37,9 +43,6 @@ button{font-family:inherit;cursor:pointer}
 .tbtn:hover{background:#3a3a3a;color:var(--txt)}
 .tsel{background:#333;color:var(--txt);border:1px solid #444;border-radius:3px;font-size:11px;padding:2px 4px;outline:none;font-family:inherit;flex-shrink:0;cursor:pointer}
 .tb-right{margin-left:auto;display:flex;align-items:center;gap:5px;flex-shrink:0;padding-left:6px}
-.mode-toggle{display:flex;background:#1e1e1e;border:1px solid var(--bdr);border-radius:4px;overflow:hidden;flex-shrink:0}
-.mode-btn{background:transparent;border:none;color:var(--mut);font-size:11px;padding:3px 8px;cursor:pointer;font-family:inherit;transition:all .12s;white-space:nowrap}
-.mode-btn.active{background:var(--green);color:#fff;font-weight:600}
 #main{display:flex;flex:1;overflow:hidden;min-height:0}
 #pjpanel{width:200px;background:#1a1a1a;border-right:1px solid var(--bdr);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;transition:width .18s}
 #pjpanel.collapsed{width:0}
@@ -70,9 +73,25 @@ button{font-family:inherit;cursor:pointer}
 .tab{display:flex;align-items:center;gap:5px;padding:0 12px;font-size:12px;color:var(--mut);border-right:1px solid var(--bdr)}
 .tab.active{background:var(--eb);color:var(--txt);border-bottom:2px solid var(--green)}
 .tab svg{width:11px;height:11px}
-.ew{flex:1;position:relative;overflow:hidden}
-#editor{position:absolute;inset:0;width:100%;height:100%;background:var(--eb);color:#d4d4d4;border:none;outline:none;resize:none;font-family:'Courier New',Consolas,monospace;font-size:13px;line-height:1.65;padding:10px 10px 10px 48px;tab-size:2;caret-color:#fff}
-#lnums{position:absolute;left:0;top:0;width:40px;padding:10px 5px 10px 0;text-align:right;font-family:'Courier New',monospace;font-size:13px;line-height:1.65;color:#4a4a4a;pointer-events:none;overflow:hidden;user-select:none;background:var(--eb);border-right:1px solid #2a2a2a}
+.ew{flex:1;position:relative;overflow:hidden; display:flex; flex-direction:column;}
+
+/* CodeMirror Overleaf-Style Theme */
+.CodeMirror {
+  flex: 1;
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  background: #ffffff; /* White editor background */
+  color: #333333;      /* Dark text */
+}
+.CodeMirror-gutters {
+  background: #f7f7f7; /* Light gray line numbers area */
+  border-right: 1px solid #ddd;
+}
+.CodeMirror-linenumber {
+  color: #999999;
+}
+
 #pvpanel{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
 .ptop{background:#2a2a2a;border-bottom:1px solid var(--bdr);padding:4px 10px;display:flex;align-items:center;gap:6px;flex-shrink:0}
 .ptop span{font-size:11px;color:var(--mut)}
@@ -90,6 +109,7 @@ button{font-family:inherit;cursor:pointer}
 #sbar{height:21px;background:#388e3c;display:flex;align-items:center;padding:0 10px;font-size:11px;color:rgba(255,255,255,.82);gap:12px;flex-shrink:0}
 .sdot{width:5px;height:5px;border-radius:50%;background:#a5d6a7;flex-shrink:0}
 #sr{margin-left:auto;display:flex;gap:12px}
+
 /* AUTH MODAL */
 #auth-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
 #auth-bg.show{display:flex}
@@ -115,6 +135,8 @@ button{font-family:inherit;cursor:pointer}
 .auth-tabs{display:flex;background:#141414;border-radius:5px;overflow:hidden}
 .auth-tab{flex:1;padding:7px;font-size:12px;font-weight:600;background:transparent;border:none;color:#555;cursor:pointer;font-family:inherit;transition:all .12s}
 .auth-tab.active{background:var(--green);color:#fff}
+
+/* GENERAL MODAL */
 #mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:500;align-items:center;justify-content:center}
 #mbg.show{display:flex}
 #mdl{background:#2a2a2a;border:1px solid #555;border-radius:8px;padding:20px 22px;width:300px;display:flex;flex-direction:column;gap:12px}
@@ -122,23 +144,24 @@ button{font-family:inherit;cursor:pointer}
 #mdl input{background:#1e1e1e;border:1px solid #555;border-radius:4px;color:var(--txt);font-size:13px;padding:7px 10px;outline:none;font-family:inherit;width:100%}
 #mdl input:focus{border-color:var(--green)}
 #mdl-btns{display:flex;gap:8px;justify-content:flex-end}
+
+/* USER DROPDOWN */
 #user-menu{display:none;position:absolute;top:44px;right:12px;background:#1e1e1e;border:1px solid #333;border-radius:7px;width:190px;padding:5px;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.5)}
 #user-menu.show{display:block}
 .um-email{padding:7px 9px;font-size:11px;color:#444;word-break:break-all}
 .um-sep{height:1px;background:#2a2a2a;margin:4px 0}
 .um-item{display:flex;align-items:center;gap:7px;padding:7px 9px;font-size:12px;color:#aaa;cursor:pointer;border-radius:5px}
 .um-item:hover{background:#252525;color:var(--txt)}
-/* HIDDEN PDF DIV — in main page context so html2canvas can read it */
+
+/* HIDDEN PDF DIV */
 #pdf-render{position:fixed;left:-99999px;top:0;background:#fff;overflow:visible;z-index:-1;pointer-events:none}
 @media(max-width:820px){#infosb,#pjpanel{display:none}}
 </style>
 </head>
 <body>
 
-<!-- HIDDEN PDF RENDER DIV -->
 <div id="pdf-render"></div>
 
-<!-- AUTH MODAL -->
 <div id="auth-bg">
   <div id="auth-box">
     <button id="auth-close">×</button>
@@ -166,7 +189,6 @@ button{font-family:inherit;cursor:pointer}
   </div>
 </div>
 
-<!-- GENERAL MODAL -->
 <div id="mbg">
   <div id="mdl">
     <h3 id="mdl-title">New Project</h3>
@@ -178,7 +200,6 @@ button{font-family:inherit;cursor:pointer}
   </div>
 </div>
 
-<!-- USER DROPDOWN -->
 <div id="user-menu">
   <div class="um-email" id="um-email">—</div>
   <div class="um-sep"></div>
@@ -188,7 +209,6 @@ button{font-family:inherit;cursor:pointer}
   </div>
 </div>
 
-<!-- HEADER -->
 <div id="hdr">
   <a class="logo" href="#">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -218,7 +238,6 @@ button{font-family:inherit;cursor:pointer}
   </div>
 </div>
 
-<!-- TOOLBAR -->
 <div id="toolbar">
   <select class="tsel" id="ins-tag">
     <option value="">Insert...</option>
@@ -245,7 +264,6 @@ button{font-family:inherit;cursor:pointer}
   <button class="tbtn" id="tb-code">&lt;/&gt;</button>
   <div class="tsep"></div>
   <button class="tbtn" id="btn-indent">⇥ Indent</button>
-  <button class="tbtn" id="btn-fmt">✦ Format</button>
   <div class="tb-right">
     <span style="font-size:11px;color:var(--mut)">Page:</span>
     <select class="tsel" id="pgsz">
@@ -260,7 +278,6 @@ button{font-family:inherit;cursor:pointer}
   </div>
 </div>
 
-<!-- MAIN -->
 <div id="main">
   <div id="pjpanel">
     <div class="pj-head">Projects <button class="pj-new" id="btn-new-pj">+ New</button></div>
@@ -278,10 +295,11 @@ button{font-family:inherit;cursor:pointer}
         <span id="tab-fn">untitled.html</span>
       </div>
     </div>
+    
     <div class="ew">
-      <div id="lnums">1</div>
-      <textarea id="editor" spellcheck="false" autocorrect="off" autocapitalize="off"></textarea>
+      <textarea id="editor"></textarea>
     </div>
+    
   </div>
   <div id="pvpanel">
     <div class="tabbar">
@@ -319,9 +337,13 @@ var SUPABASE_URL  = 'https://nutdsgzbjgvmipngxohx.supabase.co';
 var SUPABASE_ANON = 'sb_publishable_zbTO3ascamLZ2SOPorktlA_fcTUiFYo';
 var sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-// ── STARTER ───────────────────────────────────────────────────────────────────
+// ── STARTER (NOW INCLUDES KATEX) ──────────────────────────────────────────────
 var STARTER = [
 '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>My Document</title>',
+'',
+'<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">',
+'<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"><\/script>',
+'<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"><\/script>',
 '<style>',
 'body{font-family:Georgia,serif;max-width:720px;margin:48px auto;padding:0 40px;color:#1a1a1a;line-height:1.75;font-size:15px}',
 'h1{font-size:28px;border-bottom:2px solid #eee;padding-bottom:8px;margin-bottom:6px}',
@@ -343,6 +365,8 @@ var STARTER = [
 '<p>Written in <strong>HTMLLeaf</strong> &mdash; an Overleaf-style HTML editor. Write here, compile, and export a real PDF.</p>',
 '<h2>2. Mathematics</h2>',
 '<p>For twin primes <em>(p, p+2)</em>: <code>a=(p&sup2;&minus;1)/2</code>, <code>b=((p+2)&sup2;&minus;1)/2</code>. Then <strong>a+b=(p+1)&sup2;</strong>.</p>',
+'<p>According to the Riemann Hypothesis, all non-trivial zeros of the zeta function lie on the critical line:</p>',
+'$$ \\zeta(s) = 0 \\implies \\Re(s) = \\frac{1}{2} $$',
 '<div class="note"><strong>Note:</strong> This identity connects every twin prime pair to a perfect square.</div>',
 '<h2>3. Data Table</h2>',
 '<table><tr><th>p</th><th>p+2</th><th>a</th><th>b</th><th>a+b</th></tr>',
@@ -354,15 +378,38 @@ var STARTER = [
 '</body></html>'
 ].join('\n');
 
-// ── DOM ───────────────────────────────────────────────────────────────────────
-var ed=document.getElementById('editor'),pvdoc=document.getElementById('pvdoc'),
-    lnums=document.getElementById('lnums'),clog=document.getElementById('clog'),
+// ── DOM & VARIABLES ───────────────────────────────────────────────────────────
+var pvdoc=document.getElementById('pvdoc'),
+    clog=document.getElementById('clog'),
     cstatus=document.getElementById('cstatus'),stxt=document.getElementById('stxt'),
     cpos=document.getElementById('cpos'),cov=document.getElementById('cov'),
     covlbl=document.getElementById('cov-lbl'),wc=document.getElementById('wc'),
     ph=document.getElementById('ph'),pdfDiv=document.getElementById('pdf-render');
 
 var curFile='untitled.html',compiled=false,lastSrc='',activeProj=null,currentUser=null;
+
+// ── CODEMIRROR INITIALIZATION ─────────────────────────────────────────────────
+var cm = CodeMirror.fromTextArea(document.getElementById('editor'), {
+  lineNumbers: true,
+  mode: "xml",
+  lineWrapping: false,
+  extraKeys: {
+    "Ctrl-Enter": function(cm) { compile(); },
+    "Cmd-Enter": function(cm) { compile(); },
+    "Ctrl-S": function(cm) { saveNow(); },
+    "Cmd-S": function(cm) { saveNow(); }
+  }
+});
+
+// Sync cursor position and word count when typing
+cm.on("change", function() {
+  syncWC();
+  stxt.textContent='Modified — Ctrl+Enter to compile';
+});
+cm.on("cursorActivity", function() {
+  var pos = cm.getCursor();
+  cpos.textContent = 'Ln ' + (pos.line + 1) + ', Col ' + (pos.ch + 1);
+});
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
 function showAuth(){document.getElementById('auth-bg').classList.add('show');}
@@ -448,11 +495,11 @@ function renderPJ(list){
 }
 
 async function openPJ(id,name){
-  if(activeProj)await savePJCloud(activeProj,ed.value);
+  if(activeProj)await savePJCloud(activeProj,cm.getValue());
   cov.classList.add('show');covlbl.textContent='Loading…';
   var content=await loadPJContent(id);
-  activeProj=id;ed.value=content;curFile=name+'.html';setFilename(curFile);
-  compiled=false;lastSrc='';syncLN();syncWC();stxt.textContent='Opened: '+name;log('Opened: '+name);
+  activeProj=id;cm.setValue(content);curFile=name+'.html';setFilename(curFile);
+  compiled=false;lastSrc='';syncWC();stxt.textContent='Opened: '+name;log('Opened: '+name);
   await loadPJ();compile();
 }
 async function delPJ(id,name){
@@ -464,13 +511,13 @@ async function saveNow(){
   if(!activeProj){
     showModal('Save as Project','Save',async function(name){
       cov.classList.add('show');covlbl.textContent='Saving…';
-      var p=await createPJCloud(name,ed.value);
+      var p=await createPJCloud(name,cm.getValue());
       if(p){activeProj=p.id;curFile=name+'.html';setFilename(curFile);}
       cov.classList.remove('show');await loadPJ();stxt.textContent='Saved: '+name;log('Saved: '+name);
     });return;
   }
   cov.classList.add('show');covlbl.textContent='Saving…';
-  await savePJCloud(activeProj,ed.value);
+  await savePJCloud(activeProj,cm.getValue());
   cov.classList.remove('show');await loadPJ();stxt.textContent='Saved';log('Project saved');
 }
 
@@ -485,19 +532,17 @@ document.getElementById('mbg').onclick=function(e){if(e.target===this)closeModal
 
 // ── UTILS ─────────────────────────────────────────────────────────────────────
 function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
-function syncLN(){var n=ed.value.split('\n').length,h='';for(var i=1;i<=n;i++)h+=i+'<br>';lnums.innerHTML=h;}
-function syncWC(){var p=ed.value.replace(/<[^>]+>/g,' ').replace(/&[a-z]+;/gi,' ').replace(/\s+/g,' ').trim();var w=p?p.split(' ').filter(Boolean).length:0;wc.textContent=w+' words · '+ed.value.length+' chars';}
+function syncWC(){var p=cm.getValue().replace(/<[^>]+>/g,' ').replace(/&[a-z]+;/gi,' ').replace(/\s+/g,' ').trim();var w=p?p.split(' ').filter(Boolean).length:0;wc.textContent=w+' words · '+cm.getValue().length+' chars';}
 function log(msg){var t=new Date().toLocaleTimeString();clog.textContent+='['+t+'] '+msg+'\n';clog.scrollTop=9999;}
 function setFilename(name){curFile=name;document.getElementById('tab-fn').textContent=name;document.title='HTMLLeaf — '+name;}
-function getPageMM(){var sz=document.getElementById('pgsz').value,ori=document.getElementById('pgori').value,map={a4:[210,297],letter:[216,279],a3:[297,420]},wh=map[sz]||[210,297],w=wh[0],h=wh[1];if(ori==='landscape'){var t=w;w=h;h=t;}return{w:w,h:h,sz:sz,ori:ori,pxW:Math.round(w*3.7795),pxH:Math.round(h*3.7795)};}
 
-// ── COMPILE — iframe srcdoc (fills 100%, no CSS leakage) ─────────────────────
+// ── COMPILE ───────────────────────────────────────────────────────────────────
 function compile(){
   cov.classList.add('show');covlbl.textContent='Compiling…';ph.style.display='none';
   stxt.textContent='Compiling…';cstatus.className='';cstatus.textContent='Compiling…';
   setTimeout(function(){
     try{
-      var src=ed.value;lastSrc=src;compiled=true;
+      var src=cm.getValue();lastSrc=src;compiled=true;
       pvdoc.srcdoc=src;
       pvdoc.onload=function(){
         cov.classList.remove('show');
@@ -510,14 +555,9 @@ function compile(){
 }
 
 // ── DOWNLOAD HTML ─────────────────────────────────────────────────────────────
-function downloadHTML(){var blob=new Blob([ed.value],{type:'text/html;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=curFile||'document.html';document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(a.href);},2000);log('Downloaded: '+a.download);}
+function downloadHTML(){var blob=new Blob([cm.getValue()],{type:'text/html;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=curFile||'document.html';document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(a.href);},2000);log('Downloaded: '+a.download);}
 
 // ── DOWNLOAD PDF ──────────────────────────────────────────────────────────────
-// Architecture from the working version:
-// - Preview stays as iframe (fills 100%, no CSS leakage)  
-// - Copy iframe content into hidden div in main page context
-// - html2canvas reads the div (no sandbox blocking)
-// - ONE single page sized to exact content — no splits ever
 function downloadPDF(){
   if(!compiled){alert('Please compile first.');return;}
   var btn=document.getElementById('btn-dl-pdf');
@@ -526,14 +566,12 @@ function downloadPDF(){
   stxt.textContent='Generating PDF…';
 
   try{
-    // Copy iframe content into the hidden div in main page context
     var iDoc=pvdoc.contentDocument||pvdoc.contentWindow.document;
     var styleStr='';
     var styleEls=iDoc.querySelectorAll('style,link[rel="stylesheet"]');
     styleEls.forEach(function(s){styleStr+=s.outerHTML;});
     pdfDiv.innerHTML=styleStr+(iDoc.body?iDoc.body.innerHTML:'');
 
-    // Measure content size
     var W=pdfDiv.scrollWidth,H=pdfDiv.scrollHeight;
     pdfDiv.style.width=W+'px';
 
@@ -545,7 +583,6 @@ function downloadPDF(){
         pdfDiv.innerHTML='';pdfDiv.style.width='';
         var jsPDF=window.jspdf.jsPDF;
         var PX_TO_MM=25.4/96;
-        // ONE page sized exactly to content — no splits, no A4 cuts
         var pdfW=W*PX_TO_MM,pdfH=H*PX_TO_MM;
         var pdf=new jsPDF({orientation:pdfW>pdfH?'l':'p',unit:'mm',format:[pdfW,pdfH]});
         pdf.addImage(canvas.toDataURL('image/jpeg',0.97),'JPEG',0,0,pdfW,pdfH);
@@ -567,7 +604,12 @@ function downloadPDF(){
 }
 
 // ── TOOLBAR ───────────────────────────────────────────────────────────────────
-function wrapSel(o,c){var s=ed.selectionStart,e=ed.selectionEnd,sel=ed.value.slice(s,e)||'text',ins=o+sel+c;ed.value=ed.value.slice(0,s)+ins+ed.value.slice(e);ed.selectionStart=s;ed.selectionEnd=s+ins.length;ed.focus();syncLN();}
+function wrapSel(o,c){
+  var sel=cm.getSelection()||'text';
+  cm.replaceSelection(o+sel+c);
+  cm.focus();
+}
+
 document.getElementById('tb-b').onclick=function(){wrapSel('<strong>','</strong>');};
 document.getElementById('tb-i').onclick=function(){wrapSel('<em>','</em>');};
 document.getElementById('tb-u').onclick=function(){wrapSel('<u>','</u>');};
@@ -581,9 +623,8 @@ document.getElementById('tb-mk').onclick=function(){wrapSel('<mark>','</mark>');
 document.getElementById('tb-code').onclick=function(){wrapSel('<code>','</code>');};
 
 var SNIPS={h1:'<h1>Heading 1</h1>\n',h2:'<h2>Heading 2</h2>\n',h3:'<h3>Heading 3</h3>\n',p:'<p>Your paragraph.</p>\n',ul:'<ul>\n  <li>Item one</li>\n  <li>Item two</li>\n</ul>\n',ol:'<ol>\n  <li>First</li>\n  <li>Second</li>\n</ol>\n',table:'<table>\n  <tr><th>Col A</th><th>Col B</th></tr>\n  <tr><td>Data</td><td>Data</td></tr>\n</table>\n',img:'<img src="https://placehold.co/480x240?text=Image" alt="Image" style="max-width:100%;display:block;margin:10px 0">\n',code:'<pre><code>// code\nconsole.log("hello");\n</code></pre>\n',blockquote:'<blockquote>"Quote." &mdash; Author</blockquote>\n',hr:'<hr>\n',link:'<a href="https://example.com" target="_blank">Link text</a>',div:'<div style="padding:14px;border:1px solid #ddd;border-radius:4px;margin:10px 0">\n  Content\n</div>\n'};
-document.getElementById('ins-tag').onchange=function(){var tag=this.value;if(!tag)return;var ins=SNIPS[tag]||'<'+tag+'></'+tag+'>\n',pos=ed.selectionStart,bef=ed.value.slice(0,pos),aft=ed.value.slice(pos),pad=(bef.length&&!bef.endsWith('\n'))?'\n':'';ed.value=bef+pad+ins+aft;ed.selectionStart=ed.selectionEnd=pos+pad.length+ins.length;ed.focus();syncLN();this.value='';};
-document.getElementById('btn-indent').onclick=function(){var s=ed.selectionStart,e=ed.selectionEnd;if(s===e)return;var b=ed.value.slice(0,s),sel=ed.value.slice(s,e),a=ed.value.slice(e),ind=sel.split('\n').map(function(l){return'  '+l;}).join('\n');ed.value=b+ind+a;ed.selectionStart=s;ed.selectionEnd=s+ind.length;ed.focus();syncLN();};
-document.getElementById('btn-fmt').onclick=function(){var voids='area base br col embed hr img input link meta param source track wbr'.split(' '),html=ed.value.replace(/>\s+</g,'>\n<').replace(/\n{3,}/g,'\n\n'),lines=html.split('\n'),depth=0,result=[];for(var i=0;i<lines.length;i++){var line=lines[i].trim();if(!line){result.push('');continue;}var m=line.match(/^<([a-zA-Z][a-zA-Z0-9]*)/),tag=m?m[1].toLowerCase():null,isC=/^<\//.test(line),isS=/\/>$/.test(line),isV=tag&&voids.indexOf(tag)!==-1,isD=/^<!/.test(line);if(isC)depth=Math.max(0,depth-1);result.push((isD?'':'  '.repeat(depth))+line);if(!isC&&!isV&&!isS&&tag)depth++;}ed.value=result.join('\n');syncLN();ed.focus();log('Formatted');};
+document.getElementById('ins-tag').onchange=function(){var tag=this.value;if(!tag)return;var ins=SNIPS[tag]||'<'+tag+'></'+tag+'>\n';cm.replaceSelection(ins);cm.focus();this.value='';};
+document.getElementById('btn-indent').onclick=function(){cm.execCommand("indentMore");};
 
 // ── HEADER BUTTONS ────────────────────────────────────────────────────────────
 document.getElementById('btn-compile').onclick=compile;
@@ -597,31 +638,20 @@ document.getElementById('btn-new-pj').onclick=function(){
   showModal('New Project','Create',async function(name){
     cov.classList.add('show');covlbl.textContent='Creating…';
     var p=await createPJCloud(name,STARTER);
-    if(p){activeProj=p.id;ed.value=STARTER;curFile=name+'.html';setFilename(curFile);syncLN();syncWC();}
+    if(p){activeProj=p.id;cm.setValue(STARTER);curFile=name+'.html';setFilename(curFile);syncWC();}
     cov.classList.remove('show');await loadPJ();log('Created: '+name);compile();
   });
 };
 document.getElementById('btn-open').onclick=function(){document.getElementById('fileinput').click();};
 document.getElementById('btn-fs').onclick=function(){var el=document.getElementById('pvwrap');(el.requestFullscreen||el.webkitRequestFullscreen||function(){}).call(el);};
-document.getElementById('fileinput').onchange=function(e){var file=e.target.files[0];if(!file)return;var r=new FileReader();r.onload=function(ev){ed.value=ev.target.result;setFilename(file.name);activeProj=null;syncLN();syncWC();stxt.textContent='Opened: '+file.name;log('Opened: '+file.name);compile();};r.readAsText(file);this.value='';};
+document.getElementById('fileinput').onchange=function(e){var file=e.target.files[0];if(!file)return;var r=new FileReader();r.onload=function(ev){cm.setValue(ev.target.result);setFilename(file.name);activeProj=null;syncWC();stxt.textContent='Opened: '+file.name;log('Opened: '+file.name);compile();};r.readAsText(file);this.value='';};
 document.getElementById('pgsz').onchange=function(){if(compiled)compile();};
 document.getElementById('pgori').onchange=function(){if(compiled)compile();};
 
-// ── EDITOR EVENTS ─────────────────────────────────────────────────────────────
-ed.oninput=function(){syncLN();syncWC();stxt.textContent='Modified — Ctrl+Enter to compile';};
-ed.onscroll=function(){lnums.scrollTop=ed.scrollTop;};
-ed.onkeydown=function(e){
-  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();compile();return;}
-  if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveNow();return;}
-  if((e.ctrlKey||e.metaKey)&&e.key==='b'){e.preventDefault();wrapSel('<strong>','</strong>');return;}
-  if((e.ctrlKey||e.metaKey)&&e.key==='i'){e.preventDefault();wrapSel('<em>','</em>');return;}
-  if(e.key==='Tab'){e.preventDefault();var s=ed.selectionStart,en=ed.selectionEnd;if(s===en){ed.value=ed.value.slice(0,s)+'  '+ed.value.slice(en);ed.selectionStart=ed.selectionEnd=s+2;}else{var b=ed.value.slice(0,s),sel=ed.value.slice(s,en),a=ed.value.slice(en),ind=sel.split('\n').map(function(l){return'  '+l;}).join('\n');ed.value=b+ind+a;ed.selectionStart=s;ed.selectionEnd=s+ind.length;}syncLN();}
-};
-ed.onkeyup=syncCursor;ed.onclick=syncCursor;
-function syncCursor(){var t=ed.value.slice(0,ed.selectionStart),l=t.split('\n');cpos.textContent='Ln '+l.length+', Col '+(l[l.length-1].length+1);}
-
 // ── INIT ──────────────────────────────────────────────────────────────────────
-ed.value=STARTER;syncLN();syncWC();syncCursor();renderPJ();
+cm.setValue(STARTER);
+syncWC();
+renderPJ();
 setTimeout(function(){if(!currentUser)showAuth();},2000);
 compile();
 </script>
