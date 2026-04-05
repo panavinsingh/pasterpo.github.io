@@ -387,9 +387,8 @@ function compile(){
 function downloadHTML(){var blob=new Blob([ed.value],{type:'text/html;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=curFile||'document.html';document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(a.href);},2000);log('Downloaded: '+a.download);}
 
 // ── DOWNLOAD PDF ─────────────────────────────────────────────────────────────
-// Captures the VISIBLE preview iframe using html2canvas — exact screenshot of
-// what you see. Fonts are already loaded and rendered. One continuous page (Free)
-// or A4 pages. Direct .pdf download, no dialog.
+// Screenshots the pvpanel (the visible rendered preview div on screen)
+// Fonts, colors, layout — exactly what you see = exactly what you get
 function downloadPDF(){
   if(!compiled){alert('Please compile first (Ctrl+Enter).');return;}
   var btn=document.getElementById('btn-dl-pdf');
@@ -397,68 +396,39 @@ function downloadPDF(){
   cov.classList.add('show');covlbl.textContent='Generating PDF…';
   stxt.textContent='Generating PDF…';
 
-  try {
-    var iWin=pvdoc.contentWindow;
-    var iDoc=pvdoc.contentDocument||iWin.document;
-    var iBody=iDoc.body;
+  // Screenshot the entire pvpanel — this is the rendered preview visible on screen
+  var target=document.getElementById('pvpanel');
 
-    // Fonts are already loaded since user sees the preview — just wait for ready signal
-    var fontReady=(iDoc.fonts&&iDoc.fonts.ready)?iDoc.fonts.ready:Promise.resolve();
-    fontReady.then(function(){
-      var contentW=iBody.scrollWidth;
-      var contentH=iBody.scrollHeight;
+  html2canvas(target,{
+    scale:2,
+    useCORS:true,
+    allowTaint:true,
+    backgroundColor:'#ffffff',
+    logging:false,
+    ignoreElements:function(el){
+      // ignore the overlay and tabbar, only capture the actual content
+      return el.id==='cov'||el.classList.contains('tabbar')||el.classList.contains('ptop');
+    }
+  }).then(function(canvas){
+    var jsPDF=window.jspdf.jsPDF;
+    var PX_TO_MM=25.4/96;
+    var fname=(curFile.replace(/\.html?$/i,'')||'document')+'.pdf';
+    var canvasW=canvas.width/2; // divide by scale
+    var canvasH=canvas.height/2;
+    var pdfW=canvasW*PX_TO_MM;
+    var pdfH=canvasH*PX_TO_MM;
 
-      html2canvas(iBody,{
-        scale:2,
-        useCORS:true,
-        allowTaint:true,
-        backgroundColor:'#ffffff',
-        width:contentW,
-        height:contentH,
-        windowWidth:contentW,
-        windowHeight:contentH,
-        scrollX:0,
-        scrollY:0,
-        logging:false
-      }).then(function(canvas){
-        var jsPDF=window.jspdf.jsPDF;
-        var PX_TO_MM=25.4/96;
-        var fname=(curFile.replace(/\.html?$/i,'')||'document')+'.pdf';
+    // Always one page — exact screenshot of what you see
+    var pdf=new jsPDF({orientation:pdfW>pdfH?'l':'p',unit:'mm',format:[pdfW,pdfH]});
+    pdf.addImage(canvas.toDataURL('image/jpeg',0.97),'JPEG',0,0,pdfW,pdfH);
+    pdf.save(fname);
 
-        if(pdfMode==='free'){
-          // FREE: one single continuous page — exact content size, zero splits
-          var pdfW=contentW*PX_TO_MM;
-          var pdfH=contentH*PX_TO_MM;
-          var pdf=new jsPDF({orientation:pdfW>pdfH?'l':'p',unit:'mm',format:[pdfW,pdfH]});
-          pdf.addImage(canvas.toDataURL('image/jpeg',0.97),'JPEG',0,0,pdfW,pdfH);
-          pdf.save(fname);
-        } else {
-          // A4: split into standard pages
-          var pg=getPageMM();
-          var pdf=new jsPDF({orientation:pg.ori==='landscape'?'l':'p',unit:'mm',format:pg.sz==='a4'?'a4':pg.sz==='a3'?'a3':'letter'});
-          var pageW=pdf.internal.pageSize.getWidth(),pageH=pdf.internal.pageSize.getHeight();
-          var sliceHpx=(pageH/PX_TO_MM)*(canvas.width/(contentW*2));
-          var pages=Math.ceil(canvas.height/sliceHpx);
-          for(var p=0;p<pages;p++){
-            if(p>0)pdf.addPage();
-            var srcY=Math.round(p*sliceHpx),sliceH=Math.min(Math.round(sliceHpx),canvas.height-srcY);
-            var slice=document.createElement('canvas');slice.width=canvas.width;slice.height=sliceH;
-            slice.getContext('2d').drawImage(canvas,0,srcY,canvas.width,sliceH,0,0,canvas.width,sliceH);
-            pdf.addImage(slice.toDataURL('image/jpeg',0.97),'JPEG',0,0,pageW,sliceH*PX_TO_MM*(contentW/canvas.width)*2);
-          }
-          pdf.save(fname);
-        }
-        cov.classList.remove('show');btn.disabled=false;btn.textContent='⬇ PDF';
-        stxt.textContent='PDF saved!';log('PDF saved ('+pdfMode+'): '+fname);
-      }).catch(function(err){
-        cov.classList.remove('show');btn.disabled=false;btn.textContent='⬇ PDF';
-        log('PDF error: '+err.message);alert('PDF error: '+err.message);
-      });
-    });
-  } catch(e) {
     cov.classList.remove('show');btn.disabled=false;btn.textContent='⬇ PDF';
-    log('PDF error: '+e.message);alert('PDF error: '+e.message);
-  }
+    stxt.textContent='PDF saved!';log('PDF saved: '+fname);
+  }).catch(function(err){
+    cov.classList.remove('show');btn.disabled=false;btn.textContent='⬇ PDF';
+    log('PDF error: '+err.message);alert('PDF error: '+err.message);
+  });
 }
 
 function wrapSel(o,c){var s=ed.selectionStart,e=ed.selectionEnd,sel=ed.value.slice(s,e)||'text',ins=o+sel+c;ed.value=ed.value.slice(0,s)+ins+ed.value.slice(e);ed.selectionStart=s;ed.selectionEnd=s+ins.length;ed.focus();syncLN();}
