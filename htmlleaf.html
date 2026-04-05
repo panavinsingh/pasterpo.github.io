@@ -704,10 +704,79 @@ function downloadPDF(){
   var iDoc = pvdoc.contentDocument || iWin.document;
   var iBody = iDoc.body;
 
-  // Wait for fonts to be ready (they already are since user can see the preview)
-  var fontReady = (iDoc.fonts && iDoc.fonts.ready) ? iDoc.fonts.ready : Promise.resolve();
-  fontReady.then(function(){
-    // Measure the actual rendered content size
+  // FONT FIX: fetch all Google Fonts used in the document and inject as base64
+  // so html2canvas can actually render them (it cannot load external fonts)
+  function injectFontsAndCapture() {
+    var styleSheets = Array.from(iDoc.styleSheets);
+    var fontFaceRules = [];
+    styleSheets.forEach(function(ss) {
+      try {
+        Array.from(ss.cssRules || []).forEach(function(rule) {
+          if (rule.type === CSSRule.FONT_FACE_RULE) fontFaceRules.push(rule.cssText);
+        });
+      } catch(e) {}
+    });
+
+    // Also collect @import font URLs from style tags
+    var fontUrls = [];
+    var styleEls = iDoc.querySelectorAll('style, link[rel="stylesheet"]');
+    styleEls.forEach(function(el) {
+      var text = el.textContent || '';
+      var matches = text.match(/url\(['"]?(https:\/\/fonts\.googleapis\.com[^'")\s]+)['"]?\)/g) || [];
+      matches.forEach(function(m) {
+        var url = m.replace(/url\(['"]?/, '').replace(/['"]?\)/, '');
+        fontUrls.push(url);
+      });
+      // Also check @import
+      var imports = text.match(/@import url\(['"]?(https:\/\/fonts\.googleapis\.com[^'")\s]+)['"]?\)/g) || [];
+      imports.forEach(function(m) {
+        var url = m.replace(/@import url\(['"]?/, '').replace(/['"]?\)/, '');
+        fontUrls.push(url);
+      });
+    });
+
+    if (!fontUrls.length) {
+      // No Google Fonts found, just capture directly
+      doCapture();
+      return;
+    }
+
+    // Fetch font CSS, then fetch each font file as base64, inject into iframe
+    var fetches = fontUrls.map(function(url) {
+      return fetch(url).then(function(r) { return r.text(); }).then(function(css) {
+        // Find all font file URLs in this CSS
+        var fileUrls = css.match(/url\(https:\/\/fonts\.gstatic\.com[^)]+\)/g) || [];
+        return Promise.all(fileUrls.map(function(fu) {
+          var furl = fu.replace(/url\(/, '').replace(/\)/, '');
+          return fetch(furl).then(function(r) { return r.blob(); }).then(function(blob) {
+            return new Promise(function(resolve) {
+              var reader = new FileReader();
+              reader.onload = function() {
+                css = css.replace(furl, reader.result);
+                resolve();
+              };
+              reader.readAsDataURL(blob);
+            });
+          });
+        })).then(function() { return css; });
+      });
+    });
+
+    Promise.all(fetches).then(function(cssArr) {
+      // Inject all font CSS as a style tag into the iframe
+      var styleEl = iDoc.createElement('style');
+      styleEl.textContent = cssArr.join('
+');
+      iDoc.head.appendChild(styleEl);
+      // Wait a moment for fonts to apply
+      setTimeout(doCapture, 800);
+    }).catch(function() {
+      // If font fetching fails, capture anyway
+      doCapture();
+    });
+  }
+
+  function doCapture() {
     var contentW = iBody.scrollWidth;
     var contentH = iBody.scrollHeight;
 
@@ -781,7 +850,9 @@ function downloadPDF(){
       log('PDF error: ' + err.message);
       alert('PDF error: ' + err.message);
     });
-  });
+  }
+
+  injectFontsAndCapture();
 }
 
 // ── WRAP SELECTION ────────────────────────────────────────
