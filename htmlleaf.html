@@ -4,41 +4,29 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HTMLLeaf — HTML to PDF Editor</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --green:#4caf50;--green-dk:#388e3c;--green-lt:#e8f5e9;
-  --bg:#1a1a1a;--sb:#212121;--eb:#1a1a1a;
-  --bdr:#2e2e2e;--txt:#e0e0e0;--mut:#5a5a5a;
-  --accent:#4caf50;
-}
+:root{--green:#4caf50;--green-dk:#388e3c;--bg:#1a1a1a;--sb:#212121;--eb:#1a1a1a;--bdr:#2e2e2e;--txt:#e0e0e0;--mut:#666;}
 html,body{height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--txt)}
 body{display:flex;flex-direction:column}
-
-/* ── HEADER ── */
-#hdr{height:44px;background:#222;border-bottom:1px solid var(--bdr);display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;z-index:10}
-.logo{font-size:16px;font-weight:900;color:var(--green);display:flex;align-items:center;gap:6px;letter-spacing:-.3px;cursor:pointer;text-decoration:none}
+#hdr{height:44px;background:#222;border-bottom:1px solid var(--bdr);display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;z-index:10;position:relative}
+.logo{font-size:16px;font-weight:900;color:var(--green);display:flex;align-items:center;gap:6px;text-decoration:none}
 .logo svg{width:18px;height:18px}
 #user-counter{display:flex;align-items:center;gap:6px;background:#1a1a1a;border:1px solid var(--bdr);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--mut)}
-#user-counter .dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.ucDot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 #counter-num{font-weight:700;color:var(--green);font-size:12px}
-#hdr-r{margin-left:auto;display:flex;gap:6px;align-items:center}
+#hdr-r{margin-left:auto;display:flex;gap:5px;align-items:center}
 button{font-family:inherit;cursor:pointer}
-.btn{font-size:12px;padding:4px 10px;border-radius:5px;border:1px solid var(--bdr);background:transparent;color:var(--txt);transition:all .12s;white-space:nowrap}
+.btn{font-size:12px;padding:4px 10px;border-radius:5px;border:1px solid var(--bdr);background:transparent;color:var(--txt);transition:background .12s;white-space:nowrap}
 .btn:hover{background:#2a2a2a;border-color:#444}
 .btn:disabled{opacity:.35;cursor:not-allowed}
-.btn-green{background:var(--green);border-color:var(--green);color:#fff;font-weight:700;font-size:13px;padding:6px 16px;display:flex;align-items:center;gap:5px;border-radius:6px;border:none;transition:background .12s}
+.btn-green{background:var(--green);border-color:var(--green);color:#fff;font-weight:700;font-size:13px;padding:6px 16px;display:flex;align-items:center;gap:5px;border-radius:6px;border:none}
 .btn-green:hover{background:var(--green-dk)}
 .btn-green svg{width:12px;height:12px}
-.btn-user{display:flex;align-items:center;gap:6px;background:#2a2a2a;border:1px solid var(--bdr);border-radius:20px;padding:3px 10px;font-size:12px;color:var(--txt);cursor:pointer;transition:background .12s}
-.btn-user:hover{background:#333}
+.btn-user{display:flex;align-items:center;gap:6px;background:#2a2a2a;border:1px solid var(--bdr);border-radius:20px;padding:3px 10px;font-size:12px;color:var(--txt)}
 .avatar{width:22px;height:22px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
-
-/* ── TOOLBAR ── */
 #toolbar{height:40px;background:var(--sb);border-bottom:1px solid var(--bdr);display:flex;align-items:center;padding:0 8px;gap:1px;flex-shrink:0;overflow-x:auto}
 #toolbar::-webkit-scrollbar{height:2px}#toolbar::-webkit-scrollbar-thumb{background:#333}
 .tsep{width:1px;height:16px;background:var(--bdr);margin:0 4px;flex-shrink:0}
@@ -46,19 +34,14 @@ button{font-family:inherit;cursor:pointer}
 .tbtn:hover{background:#2a2a2a;color:var(--txt)}
 .tsel{background:#252525;color:var(--txt);border:1px solid var(--bdr);border-radius:4px;font-size:11px;padding:3px 5px;outline:none;font-family:inherit;flex-shrink:0;cursor:pointer}
 .tb-right{margin-left:auto;display:flex;align-items:center;gap:6px;flex-shrink:0;padding-left:6px}
-/* PDF MODE TOGGLE */
 .mode-toggle{display:flex;background:#1a1a1a;border:1px solid var(--bdr);border-radius:5px;overflow:hidden;flex-shrink:0}
 .mode-btn{background:transparent;border:none;color:var(--mut);font-size:11px;padding:3px 9px;cursor:pointer;font-family:inherit;transition:all .12s;white-space:nowrap}
 .mode-btn.active{background:var(--green);color:#fff;font-weight:600}
-
-/* ── MAIN ── */
 #main{display:flex;flex:1;overflow:hidden;min-height:0}
-
-/* ── PROJECTS ── */
 #pjpanel{width:200px;background:#1c1c1c;border-right:1px solid var(--bdr);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;transition:width .2s}
 #pjpanel.collapsed{width:0}
 .pj-head{padding:8px 10px;font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;white-space:nowrap}
-.pj-new{background:var(--green);color:#fff;border:none;border-radius:4px;font-size:10px;padding:3px 8px;cursor:pointer;font-weight:700;font-family:inherit;transition:background .12s}
+.pj-new{background:var(--green);color:#fff;border:none;border-radius:4px;font-size:10px;padding:3px 8px;cursor:pointer;font-weight:700;font-family:inherit}
 .pj-new:hover{background:var(--green-dk)}
 #pjlist{flex:1;overflow-y:auto;padding:4px 0}
 #pjlist::-webkit-scrollbar{width:3px}#pjlist::-webkit-scrollbar-thumb{background:#333}
@@ -70,19 +53,16 @@ button{font-family:inherit;cursor:pointer}
 .pji-del{opacity:0;font-size:13px;color:#e06c75;border:none;background:none;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0}
 .pji:hover .pji-del{opacity:1}
 .pj-empty{padding:20px 12px;font-size:11px;color:#333;text-align:center;line-height:1.7}
-.pj-locked{padding:16px 12px;font-size:11px;color:#3a3a3a;text-align:center;line-height:1.7;display:flex;flex-direction:column;align-items:center;gap:8px}
+.pj-locked{padding:16px 12px;display:flex;flex-direction:column;align-items:center;gap:8px}
 .pj-locked svg{opacity:.2;width:28px;height:28px}
+.pj-locked-txt{font-size:11px;color:#3a3a3a;text-align:center;line-height:1.6}
 .pj-locked-btn{background:var(--green);color:#fff;border:none;border-radius:4px;font-size:11px;padding:5px 12px;cursor:pointer;font-family:inherit;font-weight:600;width:100%}
-
-/* ── INFO SIDEBAR ── */
 #infosb{width:150px;background:var(--sb);border-right:1px solid var(--bdr);display:flex;flex-direction:column;flex-shrink:0}
 .sb-hd{padding:6px 9px;font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--bdr)}
 .sb-sec{border-top:1px solid var(--bdr);padding:6px 9px}
 .sb-ttl{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
 #clog{font-size:10px;font-family:'Courier New',monospace;color:#72c353;background:#111;border-radius:3px;padding:4px 5px;min-height:44px;max-height:100px;overflow-y:auto;white-space:pre-wrap;word-break:break-all}
 #wc{font-size:11px;color:var(--mut)}
-
-/* ── EDITOR ── */
 #edpanel{flex:1;display:flex;flex-direction:column;border-right:1px solid var(--bdr);min-width:0}
 .tabbar{height:32px;display:flex;align-items:stretch;background:#1e1e1e;border-bottom:1px solid var(--bdr);flex-shrink:0}
 .tab{display:flex;align-items:center;gap:5px;padding:0 14px;font-size:12px;color:var(--mut);border-right:1px solid var(--bdr)}
@@ -91,8 +71,6 @@ button{font-family:inherit;cursor:pointer}
 .ew{flex:1;position:relative;overflow:hidden}
 #editor{position:absolute;inset:0;width:100%;height:100%;background:var(--eb);color:#d4d4d4;border:none;outline:none;resize:none;font-family:'Courier New',Consolas,monospace;font-size:13px;line-height:1.65;padding:10px 10px 10px 48px;tab-size:2;caret-color:#fff}
 #lnums{position:absolute;left:0;top:0;width:40px;padding:10px 5px 10px 0;text-align:right;font-family:'Courier New',monospace;font-size:13px;line-height:1.65;color:#333;pointer-events:none;overflow:hidden;user-select:none;background:var(--eb);border-right:1px solid #252525}
-
-/* ── PREVIEW ── */
 #pvpanel{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
 .ptop{background:#1e1e1e;border-bottom:1px solid var(--bdr);padding:4px 10px;display:flex;align-items:center;gap:6px;flex-shrink:0}
 .ptop span{font-size:11px;color:var(--mut)}
@@ -107,42 +85,33 @@ button{font-family:inherit;cursor:pointer}
 #cov-lbl{font-size:12px;color:#666}
 #ph{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#333;font-size:13px;padding:60px 0;pointer-events:none}
 #ph svg{width:40px;height:40px;opacity:.15}
-
-/* ── STATUS BAR ── */
 #sbar{height:22px;background:#2a3a2a;border-top:1px solid #1a2a1a;display:flex;align-items:center;padding:0 12px;font-size:11px;color:rgba(255,255,255,.5);gap:14px;flex-shrink:0}
 .sdot{width:5px;height:5px;border-radius:50%;background:var(--green);flex-shrink:0}
 #sr{margin-left:auto;display:flex;gap:14px}
-
-/* ── AUTH MODAL ── */
-#auth-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+#auth-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
 #auth-bg.show{display:flex}
-#auth-box{background:#1e1e1e;border:1px solid #333;border-radius:14px;width:380px;padding:32px;display:flex;flex-direction:column;gap:20px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.6)}
-#auth-close{position:absolute;top:14px;right:16px;background:none;border:none;color:#555;font-size:20px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:4px;transition:color .12s}
-#auth-close:hover{color:#aaa}
-#auth-logo{display:flex;align-items:center;gap:8px;font-size:20px;font-weight:900;color:var(--green)}
-#auth-logo svg{width:22px;height:22px}
-#auth-title{font-size:22px;font-weight:700;color:var(--txt);line-height:1.2}
+#auth-box{background:#1e1e1e;border:1px solid #333;border-radius:14px;width:380px;padding:32px;display:flex;flex-direction:column;gap:18px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.7)}
+#auth-close{position:absolute;top:14px;right:16px;background:none;border:none;color:#555;font-size:22px;cursor:pointer;line-height:1;padding:0 6px;border-radius:4px;transition:color .12s}
+#auth-close:hover{color:#bbb}
+.auth-logo{display:flex;align-items:center;gap:8px;font-size:20px;font-weight:900;color:var(--green)}
+.auth-logo svg{width:22px;height:22px}
+#auth-title{font-size:21px;font-weight:700;color:var(--txt)}
 #auth-sub{font-size:13px;color:#555;line-height:1.5}
-.auth-divider{display:flex;align-items:center;gap:10px;color:#333;font-size:11px}
-.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:#2a2a2a}
-.auth-input{background:#141414;border:1px solid #333;border-radius:6px;color:var(--txt);font-size:13px;padding:10px 12px;outline:none;font-family:inherit;width:100%;transition:border-color .12s}
-.auth-input:focus{border-color:var(--green)}
-.auth-input::placeholder{color:#3a3a3a}
+.auth-div{display:flex;align-items:center;gap:10px;color:#333;font-size:11px}
+.auth-div::before,.auth-div::after{content:'';flex:1;height:1px;background:#2a2a2a}
+.auth-inp{background:#141414;border:1px solid #333;border-radius:6px;color:var(--txt);font-size:13px;padding:10px 12px;outline:none;font-family:inherit;width:100%;transition:border-color .12s}
+.auth-inp:focus{border-color:var(--green)}
+.auth-inp::placeholder{color:#3a3a3a}
 .btn-google{display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#333;font-weight:600;font-size:13px;padding:10px;border-radius:6px;border:none;cursor:pointer;font-family:inherit;width:100%;transition:background .12s}
 .btn-google:hover{background:#f0f0f0}
 .btn-google svg{width:18px;height:18px;flex-shrink:0}
-.btn-auth-submit{background:var(--green);color:#fff;font-weight:700;font-size:14px;padding:11px;border-radius:6px;border:none;cursor:pointer;font-family:inherit;width:100%;transition:background .12s}
-.btn-auth-submit:hover{background:var(--green-dk)}
-.btn-auth-submit:disabled{opacity:.5;cursor:not-allowed}
-#auth-toggle{font-size:12px;color:#555;text-align:center}
-#auth-toggle a{color:var(--green);cursor:pointer;text-decoration:none}
-#auth-toggle a:hover{text-decoration:underline}
+.btn-auth-sub{background:var(--green);color:#fff;font-weight:700;font-size:14px;padding:11px;border-radius:6px;border:none;cursor:pointer;font-family:inherit;width:100%;transition:background .12s}
+.btn-auth-sub:hover{background:var(--green-dk)}
+.btn-auth-sub:disabled{opacity:.5;cursor:not-allowed}
 #auth-msg{font-size:12px;text-align:center;min-height:16px;color:#e06c75}
-#auth-tabs{display:flex;gap:0;background:#141414;border-radius:6px;overflow:hidden}
+#auth-tabs{display:flex;background:#141414;border-radius:6px;overflow:hidden}
 .auth-tab{flex:1;padding:8px;font-size:12px;font-weight:600;background:transparent;border:none;color:#555;cursor:pointer;font-family:inherit;transition:all .12s}
 .auth-tab.active{background:var(--green);color:#fff}
-
-/* ── GENERAL MODAL ── */
 #mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:500;align-items:center;justify-content:center}
 #mbg.show{display:flex}
 #mdl{background:#1e1e1e;border:1px solid #333;border-radius:10px;padding:22px;width:300px;display:flex;flex-direction:column;gap:14px}
@@ -150,53 +119,46 @@ button{font-family:inherit;cursor:pointer}
 #mdl input{background:#141414;border:1px solid #333;border-radius:5px;color:var(--txt);font-size:13px;padding:8px 10px;outline:none;font-family:inherit;width:100%}
 #mdl input:focus{border-color:var(--green)}
 #mdl-btns{display:flex;gap:8px;justify-content:flex-end}
-
-/* ── USER DROPDOWN ── */
-#user-menu{display:none;position:absolute;top:46px;right:14px;background:#1e1e1e;border:1px solid #333;border-radius:8px;width:200px;padding:6px;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+#user-menu{display:none;position:absolute;top:46px;right:14px;background:#1e1e1e;border:1px solid #333;border-radius:8px;width:200px;padding:6px;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.5)}
 #user-menu.show{display:block}
 .um-item{display:flex;align-items:center;gap:8px;padding:8px 10px;font-size:12px;color:#aaa;cursor:pointer;border-radius:5px;transition:background .1s}
 .um-item:hover{background:#252525;color:var(--txt)}
-.um-item.danger{color:#e06c75}
-.um-item.danger:hover{background:#2a1515}
 .um-sep{height:1px;background:#2a2a2a;margin:4px 0}
 .um-email{padding:8px 10px;font-size:11px;color:#3a3a3a;word-break:break-all}
-
 @media(max-width:820px){#infosb,#pjpanel{display:none}}
 </style>
 </head>
 <body>
 
-<!-- AUTH MODAL -->
 <div id="auth-bg">
   <div id="auth-box">
     <button id="auth-close">×</button>
-    <div id="auth-logo">
+    <div class="auth-logo">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       HTMLLeaf
     </div>
     <div>
       <div id="auth-title">Save your work forever</div>
-      <div id="auth-sub" style="margin-top:6px">Sign in to store unlimited projects in the cloud, access them anywhere, and never lose your work.</div>
+      <div id="auth-sub" style="margin-top:6px">Sign in to store unlimited projects in the cloud — access them from any device.</div>
     </div>
     <button class="btn-google" id="btn-google-auth">
       <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Continue with Google
     </button>
-    <div class="auth-divider">or</div>
+    <div class="auth-div">or</div>
     <div id="auth-tabs">
       <button class="auth-tab active" id="tab-signin">Sign In</button>
       <button class="auth-tab" id="tab-signup">Sign Up</button>
     </div>
     <div style="display:flex;flex-direction:column;gap:10px">
-      <input class="auth-input" type="email" id="auth-email" placeholder="Email address">
-      <input class="auth-input" type="password" id="auth-pass" placeholder="Password (min 6 chars)">
+      <input class="auth-inp" type="email" id="auth-email" placeholder="Email address">
+      <input class="auth-inp" type="password" id="auth-pass" placeholder="Password (min 6 chars)">
       <div id="auth-msg"></div>
-      <button class="btn-auth-submit" id="btn-auth-submit">Sign In</button>
+      <button class="btn-auth-sub" id="btn-auth-submit">Sign In</button>
     </div>
   </div>
 </div>
 
-<!-- GENERAL MODAL -->
 <div id="mbg">
   <div id="mdl">
     <h3 id="mdl-title">New Project</h3>
@@ -208,7 +170,6 @@ button{font-family:inherit;cursor:pointer}
   </div>
 </div>
 
-<!-- USER DROPDOWN -->
 <div id="user-menu">
   <div class="um-email" id="um-email">—</div>
   <div class="um-sep"></div>
@@ -218,14 +179,13 @@ button{font-family:inherit;cursor:pointer}
   </div>
 </div>
 
-<!-- HEADER -->
 <div id="hdr">
   <a class="logo" href="#">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
     HTMLLeaf
   </a>
   <div id="user-counter" title="Total registered users">
-    <div class="dot"></div>
+    <div class="ucDot"></div>
     <span id="counter-num">—</span>
     <span>users</span>
   </div>
@@ -248,7 +208,6 @@ button{font-family:inherit;cursor:pointer}
   </div>
 </div>
 
-<!-- TOOLBAR -->
 <div id="toolbar">
   <select class="tsel" id="ins-tag">
     <option value="">Insert...</option>
@@ -260,10 +219,10 @@ button{font-family:inherit;cursor:pointer}
     <option value="link">Link</option><option value="div">Div</option>
   </select>
   <div class="tsep"></div>
-  <button class="tbtn" id="tb-b" title="Bold Ctrl+B"><b>B</b></button>
-  <button class="tbtn" id="tb-i" title="Italic Ctrl+I"><i>I</i></button>
-  <button class="tbtn" id="tb-u" title="Underline"><u>U</u></button>
-  <button class="tbtn" id="tb-s" title="Strike"><s>S</s></button>
+  <button class="tbtn" id="tb-b"><b>B</b></button>
+  <button class="tbtn" id="tb-i"><i>I</i></button>
+  <button class="tbtn" id="tb-u"><u>U</u></button>
+  <button class="tbtn" id="tb-s"><s>S</s></button>
   <div class="tsep"></div>
   <button class="tbtn" id="tb-r" style="color:#e57373">A</button>
   <button class="tbtn" id="tb-bl" style="color:#64b5f6">A</button>
@@ -277,24 +236,20 @@ button{font-family:inherit;cursor:pointer}
   <button class="tbtn" id="btn-indent">⇥ Indent</button>
   <button class="tbtn" id="btn-fmt">✦ Format</button>
   <div class="tb-right">
-    <div class="mode-toggle" title="PDF Mode">
-      <button class="mode-btn active" id="mode-free" title="Free mode: PDF height = content height, one continuous page">🖼 Free</button>
-      <button class="mode-btn" id="mode-a4" title="A4 mode: standard page breaks">📄 A4</button>
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="mode-free">🖼 Free</button>
+      <button class="mode-btn" id="mode-a4">📄 A4</button>
     </div>
     <div class="tsep"></div>
     <select class="tsel" id="pgsz">
-      <option value="a4">A4</option>
-      <option value="letter">Letter</option>
-      <option value="a3">A3</option>
+      <option value="a4">A4</option><option value="letter">Letter</option><option value="a3">A3</option>
     </select>
     <select class="tsel" id="pgori">
-      <option value="portrait">Portrait</option>
-      <option value="landscape">Landscape</option>
+      <option value="portrait">Portrait</option><option value="landscape">Landscape</option>
     </select>
   </div>
 </div>
 
-<!-- MAIN -->
 <div id="main">
   <div id="pjpanel">
     <div class="pj-head">Projects <button class="pj-new" id="btn-new-pj">+ New</button></div>
@@ -348,303 +303,104 @@ button{font-family:inherit;cursor:pointer}
 </div>
 
 <script>
-// ══════════════════════════════════════════════════════════
-// SUPABASE CONFIG — replace with your project values
-// Get them from: supabase.com → your project → Settings → API
-// ══════════════════════════════════════════════════════════
 var SUPABASE_URL  = 'https://nutdsgzbjgvmipngxohx.supabase.co';
 var SUPABASE_ANON = 'sb_publishable_zbTO3ascamLZ2SOPorktlA_fcTUiFYo';
 var sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-// ── STARTER ──────────────────────────────────────────────
-var STARTER = [
-'<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>My Document</title>',
-'<style>',
-'body{font-family:Georgia,serif;max-width:720px;margin:48px auto;padding:0 40px;color:#1a1a1a;line-height:1.75;font-size:15px}',
-'h1{font-size:28px;border-bottom:2px solid #eee;padding-bottom:8px;margin-bottom:6px}',
-'h2{font-size:20px;margin-top:28px;color:#222}',
-'.sub{color:#777;font-style:italic;margin-bottom:22px;font-size:14px}',
-'p{margin-bottom:13px}ul,ol{margin:8px 0 12px 22px}li{margin-bottom:4px}',
-'table{border-collapse:collapse;width:100%;margin:16px 0;font-size:14px}',
-'th{background:#f5f5f5;font-weight:bold;border:1px solid #ccc;padding:8px 12px;text-align:left}',
-'td{border:1px solid #ddd;padding:7px 12px}tr:nth-child(even) td{background:#fafafa}',
-'code{background:#f0f0f0;padding:2px 5px;border-radius:3px;font-family:monospace;font-size:13px;color:#c7254e}',
-'pre{background:#f8f8f8;border:1px solid #e0e0e0;border-radius:4px;padding:12px 16px}',
-'pre code{background:none;color:#333;padding:0}',
-'blockquote{border-left:4px solid #4caf50;margin:16px 0;padding:8px 16px;color:#555;background:#f9fff9;font-style:italic}',
-'.note{background:#fff8e1;border-left:4px solid #ffc107;padding:10px 14px;margin:12px 0}',
-'</style></head><body>',
-'<h1>My Document</h1>',
-'<p class="sub">Author &mdash; ' + new Date().getFullYear() + '</p>',
-'<h2>Introduction</h2>',
-'<p>Welcome to <strong>HTMLLeaf</strong> — write HTML, compile, and export a PDF instantly.</p>',
-'<h2>Features</h2>',
-'<ul><li>Cloud project storage with sign-in</li><li>Free mode: one continuous PDF page</li><li>A4 mode: standard page breaks</li><li>Toolbar formatting shortcuts</li></ul>',
-'<h2>Example Table</h2>',
-'<table><tr><th>Name</th><th>Value</th><th>Notes</th></tr>',
-'<tr><td>Alpha</td><td>1.0</td><td>First</td></tr>',
-'<tr><td>Beta</td><td>2.0</td><td>Second</td></tr></table>',
-'<h2>Conclusion</h2>',
-'<blockquote>Press <strong>Compile</strong> (Ctrl+Enter) then <strong>⬇ PDF</strong> to export.</blockquote>',
-'</body></html>'
-].join('\n');
+var STARTER = ['<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>My Document</title>','<style>','body{font-family:Georgia,serif;max-width:720px;margin:48px auto;padding:0 40px;color:#1a1a1a;line-height:1.75;font-size:15px}','h1{font-size:28px;border-bottom:2px solid #eee;padding-bottom:8px;margin-bottom:6px}','h2{font-size:20px;margin-top:28px;color:#222}','.sub{color:#777;font-style:italic;margin-bottom:22px;font-size:14px}','p{margin-bottom:13px}ul,ol{margin:8px 0 12px 22px}li{margin-bottom:4px}','table{border-collapse:collapse;width:100%;margin:16px 0;font-size:14px}','th{background:#f5f5f5;font-weight:bold;border:1px solid #ccc;padding:8px 12px;text-align:left}','td{border:1px solid #ddd;padding:7px 12px}tr:nth-child(even) td{background:#fafafa}','code{background:#f0f0f0;padding:2px 5px;border-radius:3px;font-family:monospace;font-size:13px;color:#c7254e}','pre{background:#f8f8f8;border:1px solid #e0e0e0;border-radius:4px;padding:12px 16px}','pre code{background:none;color:#333;padding:0}','blockquote{border-left:4px solid #4caf50;margin:16px 0;padding:8px 16px;color:#555;background:#f9fff9;font-style:italic}','</style></head><body>','<h1>My Document</h1>','<p class="sub">Author &mdash; '+new Date().getFullYear()+'</p>','<h2>Introduction</h2>','<p>Welcome to <strong>HTMLLeaf</strong> — write HTML, compile, and export a pixel-perfect PDF with all fonts intact.</p>','<h2>Features</h2>','<ul><li>Cloud project storage (sign in to save)</li><li>&#128444; Free mode: one continuous PDF page</li><li>&#128196; A4 mode: standard page breaks</li><li>All fonts render correctly in PDF</li></ul>','<h2>Conclusion</h2>','<blockquote>Press <strong>Compile</strong> (Ctrl+Enter) then <strong>&#8595; PDF</strong> to export.</blockquote>','</body></html>'].join('\n');
 
-// ── DOM ───────────────────────────────────────────────────
-var ed=document.getElementById('editor'),pvdoc=document.getElementById('pvdoc'),
-    lnums=document.getElementById('lnums'),clog=document.getElementById('clog'),
-    cstatus=document.getElementById('cstatus'),stxt=document.getElementById('stxt'),
-    cpos=document.getElementById('cpos'),cov=document.getElementById('cov'),
-    covlbl=document.getElementById('cov-lbl'),wc=document.getElementById('wc'),
-    ph=document.getElementById('ph');
+var ed=document.getElementById('editor'),pvdoc=document.getElementById('pvdoc'),lnums=document.getElementById('lnums'),clog=document.getElementById('clog'),cstatus=document.getElementById('cstatus'),stxt=document.getElementById('stxt'),cpos=document.getElementById('cpos'),cov=document.getElementById('cov'),covlbl=document.getElementById('cov-lbl'),wc=document.getElementById('wc'),ph=document.getElementById('ph');
+var curFile='untitled.html',compiled=false,lastSrc='',activeProj=null,pdfMode='free',currentUser=null;
 
-var curFile='untitled.html',compiled=false,lastSrc='',activeProj=null,pdfMode='free';
-var currentUser=null;
+document.getElementById('mode-free').onclick=function(){pdfMode='free';this.classList.add('active');document.getElementById('mode-a4').classList.remove('active');log('PDF mode: Free');};
+document.getElementById('mode-a4').onclick=function(){pdfMode='a4';this.classList.add('active');document.getElementById('mode-free').classList.remove('active');log('PDF mode: A4');};
 
-// ── PDF MODE ──────────────────────────────────────────────
-document.getElementById('mode-free').onclick=function(){
-  pdfMode='free';
-  document.getElementById('mode-free').classList.add('active');
-  document.getElementById('mode-a4').classList.remove('active');
-  log('PDF mode: Free (one continuous page)');
-};
-document.getElementById('mode-a4').onclick=function(){
-  pdfMode='a4';
-  document.getElementById('mode-a4').classList.add('active');
-  document.getElementById('mode-free').classList.remove('active');
-  log('PDF mode: A4 (standard page breaks)');
-};
+function showAuth(){document.getElementById('auth-bg').classList.add('show');}
+function hideAuth(){document.getElementById('auth-bg').classList.remove('show');setAuthMsg('');}
+document.getElementById('auth-close').onclick=function(){hideAuth();log('Guest mode');};
+document.getElementById('auth-bg').onclick=function(e){if(e.target===this)hideAuth();};
 
-// ── SUPABASE AUTH ─────────────────────────────────────────
-var authMode='signin'; // or 'signup'
-
-function showAuth(){ document.getElementById('auth-bg').classList.add('show'); }
-function hideAuth(){ document.getElementById('auth-bg').classList.remove('show'); setAuthMsg(''); }
-
-document.getElementById('auth-close').onclick=function(){
-  hideAuth();
-  log('Signed in as guest — projects saved locally only');
-};
-document.getElementById('auth-bg').onclick=function(e){ if(e.target===this) hideAuth(); };
-
-document.getElementById('tab-signin').onclick=function(){
-  authMode='signin';
-  document.getElementById('tab-signin').classList.add('active');
-  document.getElementById('tab-signup').classList.remove('active');
-  document.getElementById('btn-auth-submit').textContent='Sign In';
-  setAuthMsg('');
-};
-document.getElementById('tab-signup').onclick=function(){
-  authMode='signup';
-  document.getElementById('tab-signup').classList.add('active');
-  document.getElementById('tab-signin').classList.remove('active');
-  document.getElementById('btn-auth-submit').textContent='Create Account';
-  setAuthMsg('');
-};
-
-function setAuthMsg(msg,ok){
-  var el=document.getElementById('auth-msg');
-  el.textContent=msg;
-  el.style.color=ok?'#72c353':'#e06c75';
-}
+var authMode='signin';
+document.getElementById('tab-signin').onclick=function(){authMode='signin';document.getElementById('tab-signin').classList.add('active');document.getElementById('tab-signup').classList.remove('active');document.getElementById('btn-auth-submit').textContent='Sign In';setAuthMsg('');};
+document.getElementById('tab-signup').onclick=function(){authMode='signup';document.getElementById('tab-signup').classList.add('active');document.getElementById('tab-signin').classList.remove('active');document.getElementById('btn-auth-submit').textContent='Create Account';setAuthMsg('');};
+function setAuthMsg(msg,ok){var el=document.getElementById('auth-msg');el.textContent=msg;el.style.color=ok?'#72c353':'#e06c75';}
 
 document.getElementById('btn-google-auth').onclick=async function(){
-  setAuthMsg('Redirecting…','ok');
-  var res=await sb.auth.signInWithOAuth({
-    provider:'google',
-    options:{redirectTo:window.location.href}
-  });
-  if(res.error) setAuthMsg(res.error.message);
+  setAuthMsg('Redirecting to Google…','ok');
+  var res=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.href}});
+  if(res.error)setAuthMsg(res.error.message);
 };
-
 document.getElementById('btn-auth-submit').onclick=async function(){
-  var email=document.getElementById('auth-email').value.trim();
-  var pass=document.getElementById('auth-pass').value;
-  var btn=document.getElementById('btn-auth-submit');
-  if(!email||!pass){setAuthMsg('Please fill in both fields.');return;}
-  btn.disabled=true; btn.textContent='…';
+  var email=document.getElementById('auth-email').value.trim(),pass=document.getElementById('auth-pass').value,btn=this;
+  if(!email||!pass){setAuthMsg('Please fill both fields.');return;}
+  btn.disabled=true;btn.textContent='…';
   var res;
-  if(authMode==='signup'){
-    res=await sb.auth.signUp({email,password:pass});
-    if(!res.error) setAuthMsg('Check your email to confirm your account!','ok');
-  } else {
-    res=await sb.auth.signInWithPassword({email,password:pass});
-  }
-  btn.disabled=false; btn.textContent=authMode==='signup'?'Create Account':'Sign In';
+  if(authMode==='signup'){res=await sb.auth.signUp({email:email,password:pass});if(!res.error)setAuthMsg('Check your email to confirm!','ok');}
+  else{res=await sb.auth.signInWithPassword({email:email,password:pass});}
+  btn.disabled=false;btn.textContent=authMode==='signup'?'Create Account':'Sign In';
   if(res.error){setAuthMsg(res.error.message);return;}
-  if(res.data&&res.data.user){onUserSignedIn(res.data.user);hideAuth();}
+  if(res.data&&res.data.user){onSignedIn(res.data.user);hideAuth();}
 };
-
 document.getElementById('btn-signin-hdr').onclick=showAuth;
 
-function onUserSignedIn(user){
-  currentUser=user;
-  var email=user.email||'';
-  var initials=(email[0]||'U').toUpperCase();
-  document.getElementById('user-avatar').textContent=initials;
+function onSignedIn(user){
+  currentUser=user;var email=user.email||'';
+  document.getElementById('user-avatar').textContent=(email[0]||'U').toUpperCase();
   document.getElementById('user-label').textContent=email.split('@')[0].slice(0,12);
   document.getElementById('um-email').textContent=email;
   document.getElementById('btn-user-menu').style.display='flex';
   document.getElementById('btn-signin-hdr').style.display='none';
-  log('Signed in: '+email);
-  loadUserProjects();
-  updateCounter();
+  log('Signed in: '+email);loadPJ();updateCounter();
 }
+function onSignedOut(){currentUser=null;document.getElementById('btn-user-menu').style.display='none';document.getElementById('btn-signin-hdr').style.display='';activeProj=null;renderPJ();log('Signed out');}
+document.getElementById('btn-user-menu').onclick=function(e){e.stopPropagation();document.getElementById('user-menu').classList.toggle('show');};
+document.addEventListener('click',function(){document.getElementById('user-menu').classList.remove('show');});
+document.getElementById('um-signout').onclick=async function(){await sb.auth.signOut();onSignedOut();};
+sb.auth.onAuthStateChange(function(event,session){if(session&&session.user)onSignedIn(session.user);else if(event==='SIGNED_OUT')onSignedOut();});
 
-function onUserSignedOut(){
-  currentUser=null;
-  document.getElementById('btn-user-menu').style.display='none';
-  document.getElementById('btn-signin-hdr').style.display='';
-  activeProj=null;
-  renderPJ();
-  log('Signed out');
-}
-
-// user menu
-document.getElementById('btn-user-menu').onclick=function(e){
-  e.stopPropagation();
-  document.getElementById('user-menu').classList.toggle('show');
-};
-document.addEventListener('click',function(){ document.getElementById('user-menu').classList.remove('show'); });
-document.getElementById('um-signout').onclick=async function(){
-  await sb.auth.signOut();
-  onUserSignedOut();
-};
-
-// listen to auth changes
-sb.auth.onAuthStateChange(function(event,session){
-  if(session&&session.user){ onUserSignedIn(session.user); }
-  else if(event==='SIGNED_OUT'){ onUserSignedOut(); }
-});
-
-// ── USER COUNTER ──────────────────────────────────────────
-async function updateCounter(){
-  // Count rows in profiles table (one row per user, created via trigger)
-  var res=await sb.from('profiles').select('id',{count:'exact',head:true});
-  if(res.count!=null){
-    document.getElementById('counter-num').textContent=res.count.toLocaleString();
-  }
-}
+async function updateCounter(){var res=await sb.from('profiles').select('id',{count:'exact',head:true});if(res.count!=null)document.getElementById('counter-num').textContent=res.count.toLocaleString();}
 updateCounter();
 
-// ── CLOUD PROJECTS ────────────────────────────────────────
-async function loadUserProjects(){
-  if(!currentUser){renderPJ();return;}
-  var res=await sb.from('projects').select('id,name,updated_at').eq('user_id',currentUser.id).order('updated_at',{ascending:false});
-  if(res.error){log('Load error: '+res.error.message);return;}
-  renderPJ(res.data||[]);
-}
+async function loadPJ(){if(!currentUser){renderPJ();return;}var res=await sb.from('projects').select('id,name,updated_at').eq('user_id',currentUser.id).order('updated_at',{ascending:false});if(res.error){log('Load error: '+res.error.message);return;}renderPJ(res.data||[]);}
+async function loadPJContent(id){var res=await sb.from('projects').select('content').eq('id',id).single();return res.data?res.data.content:'';}
+async function savePJCloud(id,content){await sb.from('projects').update({content:content,updated_at:new Date().toISOString()}).eq('id',id).eq('user_id',currentUser.id);}
+async function createPJCloud(name,content){var res=await sb.from('projects').insert({name:name,content:content,user_id:currentUser.id}).select().single();return res.data;}
+async function deletePJCloud(id){await sb.from('projects').delete().eq('id',id).eq('user_id',currentUser.id);}
 
-async function loadProjectContent(id){
-  var res=await sb.from('projects').select('content').eq('id',id).single();
-  return res.data?res.data.content:'';
-}
-
-async function saveProjectCloud(id,content){
-  var res=await sb.from('projects').update({content,updated_at:new Date().toISOString()}).eq('id',id).eq('user_id',currentUser.id);
-  return !res.error;
-}
-
-async function createProjectCloud(name,content){
-  var res=await sb.from('projects').insert({name,content,user_id:currentUser.id}).select().single();
-  return res.data;
-}
-
-async function deleteProjectCloud(id){
-  await sb.from('projects').delete().eq('id',id).eq('user_id',currentUser.id);
-}
-
-// ── PROJECTS UI ───────────────────────────────────────────
 function renderPJ(list){
   var el=document.getElementById('pjlist');
   if(!currentUser){
-    el.innerHTML='<div class="pj-locked">'+
-      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>'+
-      '<div style="color:#3a3a3a;font-size:11px;line-height:1.6">Sign in to save and access projects in the cloud</div>'+
-      '<button class="pj-locked-btn" id="pj-signin-btn">Sign In / Sign Up</button></div>';
-    document.getElementById('pj-signin-btn').onclick=showAuth;
-    return;
+    el.innerHTML='<div class="pj-locked"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><div class="pj-locked-txt">Sign in to save projects in the cloud</div><button class="pj-locked-btn" id="pj-sign-btn">Sign In / Sign Up</button></div>';
+    document.getElementById('pj-sign-btn').onclick=showAuth;return;
   }
   if(!list||!list.length){el.innerHTML='<div class="pj-empty">No projects yet.<br>Click + New to create one.</div>';return;}
   el.innerHTML='';
   list.forEach(function(p){
-    var d=new Date(p.updated_at);
-    var ds=d.toLocaleDateString(undefined,{month:'short',day:'numeric'})+' '+d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+    var d=new Date(p.updated_at),ds=d.toLocaleDateString(undefined,{month:'short',day:'numeric'})+' '+d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
     var div=document.createElement('div');
     div.className='pji'+(p.id===activeProj?' active':'');
-    div.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:10px;height:10px;flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'+
-      '<div style="flex:1;overflow:hidden"><div class="pji-name">'+esc(p.name)+'</div><span class="pji-date">'+ds+'</span></div>'+
-      '<button class="pji-del" title="Delete">✕</button>';
+    div.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:10px;height:10px;flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><div style="flex:1;overflow:hidden"><div class="pji-name">'+esc(p.name)+'</div><span class="pji-date">'+ds+'</span></div><button class="pji-del" title="Delete">✕</button>';
     div.querySelector('.pji-del').onclick=function(e){e.stopPropagation();delPJ(p.id,p.name);};
     div.onclick=function(){openPJ(p.id,p.name);};
     el.appendChild(div);
   });
 }
-
-async function openPJ(id,name){
-  if(activeProj) await saveCurrent(false);
-  cov.classList.add('show'); covlbl.textContent='Loading…';
-  var content=await loadProjectContent(id);
-  activeProj=id; ed.value=content; curFile=name+'.html';
-  setFilename(curFile); compiled=false; lastSrc='';
-  syncLN(); syncWC(); stxt.textContent='Opened: '+name; log('Opened: '+name);
-  await loadUserProjects();
-  compile();
+async function openPJ(id,name){if(activeProj)await savePJCloud(activeProj,ed.value);cov.classList.add('show');covlbl.textContent='Loading…';var content=await loadPJContent(id);activeProj=id;ed.value=content;curFile=name+'.html';setFilename(curFile);compiled=false;lastSrc='';syncLN();syncWC();stxt.textContent='Opened: '+name;log('Opened: '+name);await loadPJ();compile();}
+async function delPJ(id,name){if(!confirm('Delete "'+name+'"?'))return;await deletePJCloud(id);if(activeProj===id)activeProj=null;await loadPJ();log('Deleted: '+name);}
+async function saveNow(){
+  if(!currentUser){showAuth();return;}
+  if(!activeProj){showModal('Save as Project','Save',async function(name){cov.classList.add('show');covlbl.textContent='Saving…';var p=await createPJCloud(name,ed.value);if(p){activeProj=p.id;curFile=name+'.html';setFilename(curFile);}cov.classList.remove('show');await loadPJ();stxt.textContent='Saved: '+name;log('Saved: '+name);});return;}
+  cov.classList.add('show');covlbl.textContent='Saving…';await savePJCloud(activeProj,ed.value);cov.classList.remove('show');await loadPJ();stxt.textContent='Saved';log('Project saved');
 }
 
-async function delPJ(id,name){
-  if(!confirm('Delete "'+name+'"? This cannot be undone.')) return;
-  await deleteProjectCloud(id);
-  if(activeProj===id){activeProj=null;}
-  await loadUserProjects();
-  log('Deleted: '+name);
-}
-
-async function saveCurrent(notify){
-  if(!currentUser){
-    if(notify!==false) showAuth();
-    return;
-  }
-  if(!activeProj){
-    showModal('Save as Project','Save',async function(name){
-      cov.classList.add('show'); covlbl.textContent='Saving…';
-      var p=await createProjectCloud(name,ed.value);
-      if(p){ activeProj=p.id; curFile=name+'.html'; setFilename(curFile); }
-      cov.classList.remove('show');
-      await loadUserProjects();
-      stxt.textContent='Saved: '+name; log('Saved: '+name);
-    });
-    return;
-  }
-  cov.classList.add('show'); covlbl.textContent='Saving…';
-  await saveProjectCloud(activeProj,ed.value);
-  cov.classList.remove('show');
-  await loadUserProjects();
-  if(notify!==false){ stxt.textContent='Saved'; log('Project saved'); }
-}
-
-// ── MODAL ─────────────────────────────────────────────────
 var modalCb=null;
-function showModal(title,ok,cb){
-  document.getElementById('mdl-title').textContent=title;
-  document.getElementById('mdl-ok').textContent=ok;
-  document.getElementById('mdl-input').value='';
-  modalCb=cb;
-  document.getElementById('mbg').classList.add('show');
-  setTimeout(function(){document.getElementById('mdl-input').focus();},60);
-}
+function showModal(title,ok,cb){document.getElementById('mdl-title').textContent=title;document.getElementById('mdl-ok').textContent=ok;document.getElementById('mdl-input').value='';modalCb=cb;document.getElementById('mbg').classList.add('show');setTimeout(function(){document.getElementById('mdl-input').focus();},60);}
 function closeModal(){document.getElementById('mbg').classList.remove('show');modalCb=null;}
 document.getElementById('mdl-cancel').onclick=closeModal;
-document.getElementById('mdl-ok').onclick=function(){
-  var n=document.getElementById('mdl-input').value.trim(); if(!n) return;
-  closeModal(); if(modalCb) modalCb(n);
-};
-document.getElementById('mdl-input').onkeydown=function(e){
-  if(e.key==='Enter') document.getElementById('mdl-ok').click();
-  if(e.key==='Escape') closeModal();
-};
-document.getElementById('mbg').onclick=function(e){if(e.target===this) closeModal();};
+document.getElementById('mdl-ok').onclick=function(){var n=document.getElementById('mdl-input').value.trim();if(!n)return;closeModal();if(modalCb)modalCb(n);};
+document.getElementById('mdl-input').onkeydown=function(e){if(e.key==='Enter')document.getElementById('mdl-ok').click();if(e.key==='Escape')closeModal();};
+document.getElementById('mbg').onclick=function(e){if(e.target===this)closeModal();};
 
-// ── UTILS ─────────────────────────────────────────────────
 function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 function syncLN(){var n=ed.value.split('\n').length,h='';for(var i=1;i<=n;i++)h+=i+'<br>';lnums.innerHTML=h;}
 function syncWC(){var p=ed.value.replace(/<[^>]+>/g,' ').replace(/&[a-z]+;/gi,' ').replace(/\s+/g,' ').trim();var w=p?p.split(' ').filter(Boolean).length:0;wc.textContent=w+' words · '+ed.value.length+' chars';}
@@ -652,251 +408,86 @@ function log(msg){var t=new Date().toLocaleTimeString();clog.textContent+='['+t+
 function setFilename(name){curFile=name;document.getElementById('tab-fn').textContent=name;document.title='HTMLLeaf — '+name;}
 function getPageMM(){var sz=document.getElementById('pgsz').value,ori=document.getElementById('pgori').value,map={a4:[210,297],letter:[216,279],a3:[297,420]},wh=map[sz]||[210,297],w=wh[0],h=wh[1];if(ori==='landscape'){var t=w;w=h;h=t;}return{w:w,h:h,sz:sz,ori:ori,pxW:Math.round(w*3.7795),pxH:Math.round(h*3.7795)};}
 
-// ── COMPILE ───────────────────────────────────────────────
 function compile(){
-  cov.classList.add('show'); covlbl.textContent='Compiling…';
-  ph.style.display='none';
-  stxt.textContent='Compiling…'; cstatus.className=''; cstatus.textContent='Compiling…';
+  cov.classList.add('show');covlbl.textContent='Compiling…';
+  ph.style.display='none';stxt.textContent='Compiling…';cstatus.className='';cstatus.textContent='Compiling…';
   setTimeout(function(){
     try{
-      var src=ed.value;
-      lastSrc=src; compiled=true;
-      pvdoc.srcdoc=src;
-      pvdoc.onload=function(){
-        cov.classList.remove('show');
-        var ts=new Date().toLocaleTimeString();
-        cstatus.textContent='✓ '+ts; cstatus.className='ok';
-        stxt.textContent='Compiled at '+ts;
-        clog.textContent='';
-        log('Compiled OK');
-      };
-    }catch(e){
-      cov.classList.remove('show');
-      cstatus.textContent='✗ '+e.message; cstatus.className='err';
-      stxt.textContent='Error'; log('Error: '+e.message);
-    }
+      var src=ed.value;lastSrc=src;compiled=true;pvdoc.srcdoc=src;
+      pvdoc.onload=function(){cov.classList.remove('show');var ts=new Date().toLocaleTimeString();cstatus.textContent='✓ '+ts;cstatus.className='ok';stxt.textContent='Compiled at '+ts;clog.textContent='';log('Compiled OK');};
+    }catch(e){cov.classList.remove('show');cstatus.textContent='✗ '+e.message;cstatus.className='err';stxt.textContent='Error';log('Error: '+e.message);}
   },80);
 }
 
-// ── DOWNLOAD HTML ─────────────────────────────────────────
 function downloadHTML(){
-  var blob=new Blob([ed.value],{type:'text/html;charset=utf-8'});
-  var a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=curFile||'document.html';
+  var blob=new Blob([ed.value],{type:'text/html;charset=utf-8'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=curFile||'document.html';
   document.body.appendChild(a);a.click();document.body.removeChild(a);
-  setTimeout(function(){URL.revokeObjectURL(a.href);},2000);
-  log('Downloaded: '+a.download);
+  setTimeout(function(){URL.revokeObjectURL(a.href);},2000);log('Downloaded: '+a.download);
 }
 
-// ── DOWNLOAD PDF ──────────────────────────────────────────
-// FREE mode: one single continuous page sized to content
-// A4 mode:   standard page breaks at A4/Letter/A3 height
+// PDF: uses browser print = 100% accurate fonts, colors, layout
+// Free mode = auto page size (content height), A4 mode = standard A4 pages
 function downloadPDF(){
   if(!compiled){alert('Please compile first.');return;}
-  var btn=document.getElementById('btn-dl-pdf');
-  btn.disabled=true; btn.textContent='⏳ Generating…';
-  cov.classList.add('show'); covlbl.textContent='Generating PDF…';
-  stxt.textContent='Generating PDF…';
+  var pg=getPageMM();
 
-  // Capture directly from the VISIBLE preview iframe — fonts already loaded and rendered
-  var iWin = pvdoc.contentWindow;
-  var iDoc = pvdoc.contentDocument || iWin.document;
-  var iBody = iDoc.body;
+  var pageCSS=(pdfMode==='free')
+    ? '<style>@page{size:auto;margin:0}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}</style>'
+    : '<style>@page{size:'+pg.sz+' '+pg.ori+';margin:15mm}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}</style>';
 
-  // FONT FIX: fetch all Google Fonts used in the document and inject as base64
-  // so html2canvas can actually render them (it cannot load external fonts)
-  function injectFontsAndCapture() {
-    var styleSheets = Array.from(iDoc.styleSheets);
-    var fontFaceRules = [];
-    styleSheets.forEach(function(ss) {
-      try {
-        Array.from(ss.cssRules || []).forEach(function(rule) {
-          if (rule.type === CSSRule.FONT_FACE_RULE) fontFaceRules.push(rule.cssText);
-        });
-      } catch(e) {}
-    });
+  var src=lastSrc,printSrc;
+  if(src.indexOf('</head>')!==-1){printSrc=src.replace('</head>',pageCSS+'</head>');}
+  else{printSrc=pageCSS+src;}
 
-    // Also collect @import font URLs from style tags
-    var fontUrls = [];
-    var styleEls = iDoc.querySelectorAll('style, link[rel="stylesheet"]');
-    styleEls.forEach(function(el) {
-      var text = el.textContent || '';
-      var matches = text.match(/url\(['"]?(https:\/\/fonts\.googleapis\.com[^'")\s]+)['"]?\)/g) || [];
-      matches.forEach(function(m) {
-        var url = m.replace(/url\(['"]?/, '').replace(/['"]?\)/, '');
-        fontUrls.push(url);
-      });
-      // Also check @import
-      var imports = text.match(/@import url\(['"]?(https:\/\/fonts\.googleapis\.com[^'")\s]+)['"]?\)/g) || [];
-      imports.forEach(function(m) {
-        var url = m.replace(/@import url\(['"]?/, '').replace(/['"]?\)/, '');
-        fontUrls.push(url);
-      });
-    });
+  var win=window.open('','_blank');
+  if(!win){alert('Please allow pop-ups for this site and try again.');return;}
 
-    if (!fontUrls.length) {
-      // No Google Fonts found, just capture directly
-      doCapture();
-      return;
-    }
+  win.document.open();
+  win.document.write(printSrc);
+  win.document.close();
 
-    // Fetch font CSS, then fetch each font file as base64, inject into iframe
-    var fetches = fontUrls.map(function(url) {
-      return fetch(url).then(function(r) { return r.text(); }).then(function(css) {
-        // Find all font file URLs in this CSS
-        var fileUrls = css.match(/url\(https:\/\/fonts\.gstatic\.com[^)]+\)/g) || [];
-        return Promise.all(fileUrls.map(function(fu) {
-          var furl = fu.replace(/url\(/, '').replace(/\)/, '');
-          return fetch(furl).then(function(r) { return r.blob(); }).then(function(blob) {
-            return new Promise(function(resolve) {
-              var reader = new FileReader();
-              reader.onload = function() {
-                css = css.replace(furl, reader.result);
-                resolve();
-              };
-              reader.readAsDataURL(blob);
-            });
-          });
-        })).then(function() { return css; });
-      });
-    });
+  win.onload=function(){
+    setTimeout(function(){
+      win.focus();win.print();
+      win.onafterprint=function(){win.close();};
+      setTimeout(function(){try{win.close();}catch(e){}},30000);
+    },1200); // Wait for fonts to fully render
+  };
 
-    Promise.all(fetches).then(function(cssArr) {
-      // Inject all font CSS as a style tag into the iframe
-      var styleEl = iDoc.createElement('style');
-      styleEl.textContent = cssArr.join('
-');
-      iDoc.head.appendChild(styleEl);
-      // Wait a moment for fonts to apply
-      setTimeout(doCapture, 800);
-    }).catch(function() {
-      // If font fetching fails, capture anyway
-      doCapture();
-    });
-  }
-
-  function doCapture() {
-    var contentW = iBody.scrollWidth;
-    var contentH = iBody.scrollHeight;
-
-    html2canvas(iBody, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: '#ffffff',
-      width: contentW,
-      height: contentH,
-      windowWidth: contentW,
-      windowHeight: contentH,
-      scrollX: 0,
-      scrollY: 0,
-      logging: false,
-      onclone: function(clonedDoc) {
-        // Copy all computed styles from original to clone to preserve fonts
-        clonedDoc.body.style.fontFamily = iBody.style.fontFamily;
-      }
-    }).then(function(canvas){
-      var jsPDF = window.jspdf.jsPDF;
-      var PX_TO_MM = 25.4 / 96;
-      var fname = (curFile.replace(/\.html?$/i,'') || 'document') + '.pdf';
-
-      if(pdfMode === 'free'){
-        // FREE MODE: one single continuous page
-        var pdfW = contentW * PX_TO_MM;
-        var pdfH = contentH * PX_TO_MM;
-        var pdf = new jsPDF({
-          orientation: pdfW > pdfH ? 'l' : 'p',
-          unit: 'mm',
-          format: [pdfW, pdfH]
-        });
-        pdf.addImage(canvas.toDataURL('image/jpeg', 0.97), 'JPEG', 0, 0, pdfW, pdfH);
-        pdf.save(fname);
-
-      } else {
-        // A4 MODE: standard page breaks
-        var pg = getPageMM();
-        var pdf = new jsPDF({
-          orientation: pg.ori === 'landscape' ? 'l' : 'p',
-          unit: 'mm',
-          format: pg.sz === 'a4' ? 'a4' : pg.sz === 'a3' ? 'a3' : 'letter'
-        });
-        var pageW = pdf.internal.pageSize.getWidth();
-        var pageH = pdf.internal.pageSize.getHeight();
-        var scaledPageHpx = (pageH / PX_TO_MM) * (canvas.width / (contentW * 2));
-        var totalPages = Math.ceil(canvas.height / scaledPageHpx);
-        for(var p = 0; p < totalPages; p++){
-          if(p > 0) pdf.addPage();
-          var srcY = Math.round(p * scaledPageHpx);
-          var sliceH = Math.min(Math.round(scaledPageHpx), canvas.height - srcY);
-          var slice = document.createElement('canvas');
-          slice.width = canvas.width; slice.height = sliceH;
-          slice.getContext('2d').drawImage(canvas, 0, srcY, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
-          var sliceHmm = sliceH * PX_TO_MM * (contentW / canvas.width) * 2;
-          pdf.addImage(slice.toDataURL('image/jpeg', 0.97), 'JPEG', 0, 0, pageW, sliceHmm);
-        }
-        pdf.save(fname);
-      }
-
-      cov.classList.remove('show');
-      btn.disabled = false; btn.textContent = '⬇ PDF';
-      stxt.textContent = 'PDF saved: ' + fname;
-      log('PDF saved (' + pdfMode + ' mode): ' + fname);
-
-    }).catch(function(err){
-      cov.classList.remove('show');
-      btn.disabled = false; btn.textContent = '⬇ PDF';
-      stxt.textContent = 'PDF error: ' + err.message;
-      log('PDF error: ' + err.message);
-      alert('PDF error: ' + err.message);
-    });
-  }
-
-  injectFontsAndCapture();
+  log('Print dialog opened ('+pdfMode+') — choose Save as PDF');
+  stxt.textContent='Print dialog opened — select "Save as PDF"';
 }
 
-// ── WRAP SELECTION ────────────────────────────────────────
 function wrapSel(o,c){var s=ed.selectionStart,e=ed.selectionEnd,sel=ed.value.slice(s,e)||'text',ins=o+sel+c;ed.value=ed.value.slice(0,s)+ins+ed.value.slice(e);ed.selectionStart=s;ed.selectionEnd=s+ins.length;ed.focus();syncLN();}
 
-// ── TOOLBAR BUTTONS ───────────────────────────────────────
-document.getElementById('tb-b'   ).onclick=function(){wrapSel('<strong>','</strong>');};
-document.getElementById('tb-i'   ).onclick=function(){wrapSel('<em>','</em>');};
-document.getElementById('tb-u'   ).onclick=function(){wrapSel('<u>','</u>');};
-document.getElementById('tb-s'   ).onclick=function(){wrapSel('<s>','</s>');};
-document.getElementById('tb-r'   ).onclick=function(){wrapSel('<span style="color:#e53935">','</span>');};
-document.getElementById('tb-bl'  ).onclick=function(){wrapSel('<span style="color:#1e88e5">','</span>');};
-document.getElementById('tb-g'   ).onclick=function(){wrapSel('<span style="color:#43a047">','</span>');};
-document.getElementById('tb-sub' ).onclick=function(){wrapSel('<sub>','</sub>');};
-document.getElementById('tb-sup' ).onclick=function(){wrapSel('<sup>','</sup>');};
-document.getElementById('tb-mk'  ).onclick=function(){wrapSel('<mark>','</mark>');};
+document.getElementById('tb-b').onclick=function(){wrapSel('<strong>','</strong>');};
+document.getElementById('tb-i').onclick=function(){wrapSel('<em>','</em>');};
+document.getElementById('tb-u').onclick=function(){wrapSel('<u>','</u>');};
+document.getElementById('tb-s').onclick=function(){wrapSel('<s>','</s>');};
+document.getElementById('tb-r').onclick=function(){wrapSel('<span style="color:#e53935">','</span>');};
+document.getElementById('tb-bl').onclick=function(){wrapSel('<span style="color:#1e88e5">','</span>');};
+document.getElementById('tb-g').onclick=function(){wrapSel('<span style="color:#43a047">','</span>');};
+document.getElementById('tb-sub').onclick=function(){wrapSel('<sub>','</sub>');};
+document.getElementById('tb-sup').onclick=function(){wrapSel('<sup>','</sup>');};
+document.getElementById('tb-mk').onclick=function(){wrapSel('<mark>','</mark>');};
 document.getElementById('tb-code').onclick=function(){wrapSel('<code>','</code>');};
 
-// ── INSERT SNIPPETS ───────────────────────────────────────
 var SNIPS={h1:'<h1>Heading 1</h1>\n',h2:'<h2>Heading 2</h2>\n',h3:'<h3>Heading 3</h3>\n',p:'<p>Your paragraph.</p>\n',ul:'<ul>\n  <li>Item one</li>\n  <li>Item two</li>\n</ul>\n',ol:'<ol>\n  <li>First</li>\n  <li>Second</li>\n</ol>\n',table:'<table>\n  <tr><th>Col A</th><th>Col B</th></tr>\n  <tr><td>Data</td><td>Data</td></tr>\n</table>\n',img:'<img src="https://placehold.co/480x240?text=Image" alt="Image" style="max-width:100%;display:block;margin:10px 0">\n',code:'<pre><code>// code\nconsole.log("hello");\n</code></pre>\n',blockquote:'<blockquote>"Quote." &mdash; Author</blockquote>\n',hr:'<hr>\n',link:'<a href="https://example.com" target="_blank">Link text</a>',div:'<div style="padding:14px;border:1px solid #ddd;border-radius:4px;margin:10px 0">\n  Content\n</div>\n'};
 document.getElementById('ins-tag').onchange=function(){var tag=this.value;if(!tag)return;var ins=SNIPS[tag]||'<'+tag+'></'+tag+'>\n',pos=ed.selectionStart,bef=ed.value.slice(0,pos),aft=ed.value.slice(pos),pad=(bef.length&&!bef.endsWith('\n'))?'\n':'';ed.value=bef+pad+ins+aft;ed.selectionStart=ed.selectionEnd=pos+pad.length+ins.length;ed.focus();syncLN();this.value='';};
 
-// ── INDENT & FORMAT ───────────────────────────────────────
 document.getElementById('btn-indent').onclick=function(){var s=ed.selectionStart,e=ed.selectionEnd;if(s===e)return;var b=ed.value.slice(0,s),sel=ed.value.slice(s,e),a=ed.value.slice(e),ind=sel.split('\n').map(function(l){return'  '+l;}).join('\n');ed.value=b+ind+a;ed.selectionStart=s;ed.selectionEnd=s+ind.length;ed.focus();syncLN();};
 document.getElementById('btn-fmt').onclick=function(){var voids='area base br col embed hr img input link meta param source track wbr'.split(' '),html=ed.value.replace(/>\s+</g,'>\n<').replace(/\n{3,}/g,'\n\n'),lines=html.split('\n'),depth=0,result=[];for(var i=0;i<lines.length;i++){var line=lines[i].trim();if(!line){result.push('');continue;}var m=line.match(/^<([a-zA-Z][a-zA-Z0-9]*)/),tag=m?m[1].toLowerCase():null,isC=/^<\//.test(line),isS=/\/>$/.test(line),isV=tag&&voids.indexOf(tag)!==-1,isD=/^<!/.test(line);if(isC)depth=Math.max(0,depth-1);result.push((isD?'':'  '.repeat(depth))+line);if(!isC&&!isV&&!isS&&tag)depth++;}ed.value=result.join('\n');syncLN();ed.focus();log('Formatted');};
 
-// ── HEADER BUTTONS ────────────────────────────────────────
-document.getElementById('btn-compile'  ).onclick=compile;
+document.getElementById('btn-compile').onclick=compile;
 document.getElementById('btn-recompile').onclick=compile;
-document.getElementById('btn-dl-html'  ).onclick=downloadHTML;
-document.getElementById('btn-dl-pdf'   ).onclick=downloadPDF;
-document.getElementById('btn-save'     ).onclick=function(){saveCurrent(true);};
+document.getElementById('btn-dl-html').onclick=downloadHTML;
+document.getElementById('btn-dl-pdf').onclick=downloadPDF;
+document.getElementById('btn-save').onclick=function(){saveNow();};
 document.getElementById('btn-toggle-pj').onclick=function(){document.getElementById('pjpanel').classList.toggle('collapsed');};
-document.getElementById('btn-new-pj'   ).onclick=function(){
+document.getElementById('btn-new-pj').onclick=function(){
   if(!currentUser){showAuth();return;}
-  showModal('New Project','Create',async function(name){
-    cov.classList.add('show');covlbl.textContent='Creating…';
-    var p=await createProjectCloud(name,STARTER);
-    if(p){activeProj=p.id;ed.value=STARTER;curFile=name+'.html';setFilename(curFile);syncLN();syncWC();}
-    cov.classList.remove('show');
-    await loadUserProjects();
-    log('Created: '+name);
-    compile();
-  });
+  showModal('New Project','Create',async function(name){cov.classList.add('show');covlbl.textContent='Creating…';var p=await createPJCloud(name,STARTER);if(p){activeProj=p.id;ed.value=STARTER;curFile=name+'.html';setFilename(curFile);syncLN();syncWC();}cov.classList.remove('show');await loadPJ();log('Created: '+name);compile();});
 };
 document.getElementById('btn-open').onclick=function(){document.getElementById('fileinput').click();};
 document.getElementById('btn-fs').onclick=function(){var el=document.getElementById('pvwrap');(el.requestFullscreen||el.webkitRequestFullscreen||function(){}).call(el);};
@@ -904,12 +495,11 @@ document.getElementById('fileinput').onchange=function(e){var file=e.target.file
 document.getElementById('pgsz').onchange=function(){if(compiled)compile();};
 document.getElementById('pgori').onchange=function(){if(compiled)compile();};
 
-// ── EDITOR EVENTS ─────────────────────────────────────────
 ed.oninput=function(){syncLN();syncWC();stxt.textContent='Modified — Ctrl+Enter to compile';};
 ed.onscroll=function(){lnums.scrollTop=ed.scrollTop;};
 ed.onkeydown=function(e){
   if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();compile();return;}
-  if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveCurrent(true);return;}
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveNow();return;}
   if((e.ctrlKey||e.metaKey)&&e.key==='b'){e.preventDefault();wrapSel('<strong>','</strong>');return;}
   if((e.ctrlKey||e.metaKey)&&e.key==='i'){e.preventDefault();wrapSel('<em>','</em>');return;}
   if(e.key==='Tab'){e.preventDefault();var s=ed.selectionStart,en=ed.selectionEnd;if(s===en){ed.value=ed.value.slice(0,s)+'  '+ed.value.slice(en);ed.selectionStart=ed.selectionEnd=s+2;}else{var b=ed.value.slice(0,s),sel=ed.value.slice(s,en),a=ed.value.slice(en),ind=sel.split('\n').map(function(l){return'  '+l;}).join('\n');ed.value=b+ind+a;ed.selectionStart=s;ed.selectionEnd=s+ind.length;}syncLN();}
@@ -917,15 +507,8 @@ ed.onkeydown=function(e){
 ed.onkeyup=syncCursor;ed.onclick=syncCursor;
 function syncCursor(){var t=ed.value.slice(0,ed.selectionStart),l=t.split('\n');cpos.textContent='Ln '+l.length+', Col '+(l[l.length-1].length+1);}
 
-// ── INIT ──────────────────────────────────────────────────
-ed.value=STARTER;syncLN();syncWC();syncCursor();
-renderPJ();
-
-// Show auth prompt after 2 seconds if not signed in
-setTimeout(function(){
-  if(!currentUser) showAuth();
-},2000);
-
+ed.value=STARTER;syncLN();syncWC();syncCursor();renderPJ();
+setTimeout(function(){if(!currentUser)showAuth();},2000);
 compile();
 </script>
 </body>
