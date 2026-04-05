@@ -938,9 +938,11 @@ function compile(){
         stxtEl.textContent='Compiled at '+ts;
         log('Compiled OK');
       };
-      pvdocEl.srcdoc=src;
-      // Fallback: hide cover after 2s even if onload doesn't fire
-      setTimeout(function(){ covEl.classList.remove('show'); },2000);
+      // Use blob URL so fonts/CSS load same as PDF download
+      var prevBlob=new Blob([src],{type:'text/html;charset=utf-8'});
+      var prevUrl=URL.createObjectURL(prevBlob);
+      pvdocEl.src=prevUrl;
+      setTimeout(function(){ covEl.classList.remove('show'); },2500);
 
     }catch(ex){
       covEl.classList.remove('show');
