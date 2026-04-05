@@ -390,95 +390,138 @@ function downloadHTML(){var blob=new Blob([ed.value],{type:'text/html;charset=ut
 // Screenshots the pvpanel (the visible rendered preview div on screen)
 // Fonts, colors, layout — exactly what you see = exactly what you get
 function downloadPDF(){
-  if(!compiled){alert('Please compile first (Ctrl+Enter).');return;}
+  if(!compiled){alert('Please compile first.');return;}
   var btn=document.getElementById('btn-dl-pdf');
   btn.disabled=true;btn.textContent='⏳ Generating…';
   cov.classList.add('show');covlbl.textContent='Generating PDF…';
   stxt.textContent='Generating PDF…';
 
-  // Create invisible offscreen iframe, load exact same HTML, measure real content size
-  var pdfFrame=document.createElement('iframe');
-  pdfFrame.style.cssText='position:fixed;left:-99999px;top:0;width:1280px;height:10px;opacity:0;pointer-events:none;border:none;z-index:-999';
-  document.body.appendChild(pdfFrame);
+  // Step 1: Find all Google Font URLs in the compiled HTML
+  var src=lastSrc;
+  var fontUrls=[];
+  var re=/@import url\(['"]?(https:\/\/fonts\.googleapis\.com[^'")\s]+)['"]?\)|<link[^>]+href=['"]?(https:\/\/fonts\.googleapis\.com[^'">\s]+)['"]?/g;
+  var m;
+  while((m=re.exec(src))!==null){ fontUrls.push(m[1]||m[2]); }
 
-  pdfFrame.onload=function(){
-    // Wait for fonts (Google Fonts etc) to fully load inside the frame
-    var iWin=pdfFrame.contentWindow;
-    var iDoc=pdfFrame.contentDocument||iWin.document;
-    var fontReady=(iDoc.fonts&&iDoc.fonts.ready)?iDoc.fonts.ready:Promise.resolve();
+  if(fontUrls.length===0){
+    // No Google Fonts — go straight to PDF
+    runPDF(src);
+    return;
+  }
 
-    fontReady.then(function(){
-      setTimeout(function(){
-        try{
+  // Step 2: Fetch each Google Fonts CSS, then fetch each font file as base64
+  log('Fetching fonts for PDF…');
+  var allFontCSS='';
+
+  Promise.all(fontUrls.map(function(url){
+    return fetch(url)
+      .then(function(r){return r.text();})
+      .then(function(css){
+        // Find all font file URLs inside this CSS
+        var fileRe=/url\((https:\/\/fonts\.gstatic\.com[^)]+)\)/g;
+        var fm, fileUrls=[];
+        while((fm=fileRe.exec(css))!==null) fileUrls.push(fm[1]);
+
+        return Promise.all(fileUrls.map(function(furl){
+          return fetch(furl)
+            .then(function(r){return r.blob();})
+            .then(function(blob){
+              return new Promise(function(resolve){
+                var reader=new FileReader();
+                reader.onload=function(){
+                  css=css.split(furl).join(reader.result);
+                  resolve();
+                };
+                reader.readAsDataURL(blob);
+              });
+            });
+        })).then(function(){ return css; });
+      });
+  })).then(function(cssArr){
+    allFontCSS=cssArr.join('
+');
+    // Step 3: Inject base64 fonts into the HTML, replacing Google Fonts link/import
+    var injected=src;
+    // Remove original Google Fonts links/imports
+    injected=injected.replace(/<link[^>]*fonts\.googleapis\.com[^>]*>/gi,'');
+    injected=injected.replace(/@import url\(['"]?https:\/\/fonts\.googleapis\.com[^'")\s]+['"]?\);?/gi,'');
+    // Inject base64 font CSS before </head>
+    var fontTag='<style>'+allFontCSS+'</style>';
+    if(injected.indexOf('</head>')!==-1){
+      injected=injected.replace('</head>',fontTag+'</head>');
+    } else {
+      injected=fontTag+injected;
+    }
+    log('Fonts embedded. Rendering PDF…');
+    runPDF(injected);
+  }).catch(function(err){
+    log('Font fetch failed, trying without: '+err.message);
+    runPDF(src);
+  });
+
+  function runPDF(htmlSrc){
+    var pdfFrame=document.createElement('iframe');
+    pdfFrame.style.cssText='position:fixed;left:-99999px;top:0;width:1280px;height:10px;opacity:0;pointer-events:none;border:none;z-index:-999';
+    document.body.appendChild(pdfFrame);
+
+    pdfFrame.onload=function(){
+      var iDoc=pdfFrame.contentDocument||pdfFrame.contentWindow.document;
+      var fontReady=(iDoc.fonts&&iDoc.fonts.ready)?iDoc.fonts.ready:Promise.resolve();
+      fontReady.then(function(){
+        setTimeout(function(){
           var iBody=iDoc.body;
-          var contentW=iBody.scrollWidth;
-          var contentH=iBody.scrollHeight;
-          // Size iframe to full content so nothing is clipped
-          pdfFrame.style.width=contentW+'px';
-          pdfFrame.style.height=contentH+'px';
-
+          var W=iBody.scrollWidth, H=iBody.scrollHeight;
+          pdfFrame.style.width=W+'px';
+          pdfFrame.style.height=H+'px';
           setTimeout(function(){
             html2canvas(iBody,{
-              scale:2,
-              useCORS:true,
-              allowTaint:true,
+              scale:2,useCORS:true,allowTaint:true,
               backgroundColor:'#ffffff',
-              width:contentW,
-              height:contentH,
-              windowWidth:contentW,
-              windowHeight:contentH,
-              scrollX:0,
-              scrollY:0,
-              logging:false
+              width:W,height:H,windowWidth:W,windowHeight:H,
+              scrollX:0,scrollY:0,logging:false
             }).then(function(canvas){
               document.body.removeChild(pdfFrame);
               var jsPDF=window.jspdf.jsPDF;
-              var PX_TO_MM=25.4/96;
+              var MM=25.4/96;
               var fname=(curFile.replace(/\.html?$/i,'')||'document')+'.pdf';
 
               if(pdfMode==='free'){
-                // FREE: one single continuous page — exact content, zero splits
-                var pdfW=contentW*PX_TO_MM;
-                var pdfH=contentH*PX_TO_MM;
-                var pdf=new jsPDF({orientation:pdfW>pdfH?'l':'p',unit:'mm',format:[pdfW,pdfH]});
-                pdf.addImage(canvas.toDataURL('image/jpeg',0.97),'JPEG',0,0,pdfW,pdfH);
+                var pw=W*MM, ph=H*MM;
+                var pdf=new jsPDF({orientation:pw>ph?'l':'p',unit:'mm',format:[pw,ph]});
+                pdf.addImage(canvas.toDataURL('image/jpeg',0.97),'JPEG',0,0,pw,ph);
                 pdf.save(fname);
               } else {
-                // A4: split into A4/Letter/A3 pages
                 var pg=getPageMM();
                 var pdf=new jsPDF({orientation:pg.ori==='landscape'?'l':'p',unit:'mm',format:pg.sz==='a4'?'a4':pg.sz==='a3'?'a3':'letter'});
                 var pageW=pdf.internal.pageSize.getWidth(),pageH=pdf.internal.pageSize.getHeight();
-                var sliceHpx=(pageH/PX_TO_MM)*(canvas.width/(contentW*2));
-                var pages=Math.ceil(canvas.height/sliceHpx);
+                var slHpx=(pageH/MM)*(canvas.width/(W*2));
+                var pages=Math.ceil(canvas.height/slHpx);
                 for(var p=0;p<pages;p++){
                   if(p>0)pdf.addPage();
-                  var srcY=Math.round(p*sliceHpx),slH=Math.min(Math.round(sliceHpx),canvas.height-srcY);
-                  var sl=document.createElement('canvas');sl.width=canvas.width;sl.height=slH;
-                  sl.getContext('2d').drawImage(canvas,0,srcY,canvas.width,slH,0,0,canvas.width,slH);
-                  pdf.addImage(sl.toDataURL('image/jpeg',0.97),'JPEG',0,0,pageW,slH*PX_TO_MM*(contentW/canvas.width)*2);
+                  var sy=Math.round(p*slHpx),sh=Math.min(Math.round(slHpx),canvas.height-sy);
+                  var sl=document.createElement('canvas');sl.width=canvas.width;sl.height=sh;
+                  sl.getContext('2d').drawImage(canvas,0,sy,canvas.width,sh,0,0,canvas.width,sh);
+                  pdf.addImage(sl.toDataURL('image/jpeg',0.97),'JPEG',0,0,pageW,sh*MM*(W/canvas.width)*2);
                 }
                 pdf.save(fname);
               }
-
               cov.classList.remove('show');btn.disabled=false;btn.textContent='⬇ PDF';
-              stxt.textContent='PDF saved!';log('PDF saved ('+pdfMode+'): '+fname);
+              stxt.textContent='PDF saved!';log('PDF saved: '+fname);
             }).catch(function(err){
               document.body.removeChild(pdfFrame);
-              cov.classList.remove('show');btn.disabled=false;btn.textContent='⬇ PDF';
-              log('PDF error: '+err.message);alert('PDF error: '+err.message);
+              done(err.message);
             });
-          },500);
-        }catch(e){
-          document.body.removeChild(pdfFrame);
-          cov.classList.remove('show');btn.disabled=false;btn.textContent='⬇ PDF';
-          log('PDF error: '+e.message);alert('PDF error: '+e.message);
-        }
-      },500);
-    });
-  };
+          },800);
+        },800);
+      });
+    };
+    pdfFrame.srcdoc=htmlSrc;
+  }
 
-  // Load the compiled HTML into the offscreen iframe
-  pdfFrame.srcdoc=lastSrc;
+  function done(err){
+    cov.classList.remove('show');btn.disabled=false;btn.textContent='⬇ PDF';
+    if(err){log('PDF error: '+err);alert('PDF error: '+err);}
+  }
 }
 
 function wrapSel(o,c){var s=ed.selectionStart,e=ed.selectionEnd,sel=ed.value.slice(s,e)||'text',ins=o+sel+c;ed.value=ed.value.slice(0,s)+ins+ed.value.slice(e);ed.selectionStart=s;ed.selectionEnd=s+ins.length;ed.focus();syncLN();}
