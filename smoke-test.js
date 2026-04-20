@@ -122,9 +122,14 @@ async function main() {
     diag: document.getElementById('diag-summary')?.textContent || '',
     saveState: document.getElementById('save-state')?.textContent || '',
     cloudState: document.getElementById('cloud-state')?.textContent || '',
+    exportMode: document.getElementById('pgexport')?.value || '',
+    continuousExport: typeof exportContinuousPDF === 'function',
+    pagedExport: typeof exportPagedPDF === 'function',
+    smartBreaks: typeof smartBreaks === 'function',
     sandbox: document.getElementById('pvdoc')?.getAttribute('sandbox') || '',
     sameOrigin: (document.getElementById('pvdoc')?.getAttribute('sandbox') || '').includes('allow-same-origin'),
     hasSrcdoc: !!document.getElementById('pvdoc')?.srcdoc,
+    fitPreviewScript: (document.getElementById('pvdoc')?.srcdoc || '').includes('htmlleafFit'),
     localStorageBytes: (localStorage.getItem('htmlleaf.projects.v3') || '').length
   }))()`);
 
@@ -142,9 +147,13 @@ async function main() {
   if (!state.katex) failures.push("KaTeX missing");
   if (state.localProjects < 1) failures.push("local starter project missing");
   if (state.templates < 3) failures.push("templates missing");
+  if (state.exportMode !== "continuous") failures.push("continuous PDF export is not the default");
+  if (!state.continuousExport) failures.push("continuous PDF export function missing");
+  if (!state.pagedExport || !state.smartBreaks) failures.push("smart paged PDF export functions missing");
   if (!state.cstatus.includes("Compiled")) failures.push("compile status did not update");
   if (state.sameOrigin) failures.push("iframe sandbox still allows same-origin");
   if (!state.hasSrcdoc) failures.push("preview srcdoc missing");
+  if (!state.fitPreviewScript) failures.push("fit-preview script missing");
   if (state.localStorageBytes < 100) failures.push("local project storage missing");
   if (!pageSettingWorked) failures.push("page orientation/size did not affect preview");
   if (exceptions.length) failures.push("runtime exceptions: " + exceptions.join(" | "));

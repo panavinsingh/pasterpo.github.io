@@ -71,3 +71,15 @@ Latest result: passed.
 - Preview sandbox: `allow-scripts allow-popups allow-downloads`
 - Page setting check: passed
 - Screenshot: `smoke-test.png`
+
+## Follow-Up Refinement
+
+After testing the live editor, the PDF export and preview were refined again:
+
+- Restored original-style PDF export as the default behavior: `Continuous, no split`.
+- Kept paged PDF export as an optional advanced mode.
+- Added smart page-break avoidance for paged export so code blocks, tables, figures, blockquotes, notes, images, and headings are less likely to be sliced.
+- Added a `PDF export` selector in Document Setup.
+- Added a fit-to-preview pass inside the sandboxed compiled document so wide pages do not look broken or clipped after Compile.
+- Upgraded the visual design with a darker studio shell, signal-grid texture, stronger neon-accent controls, richer panel styling, and a small visual brand image.
+- Updated `smoke-test.js` to verify continuous PDF export is the default, smart paged export functions exist, and the preview fit script is present.
