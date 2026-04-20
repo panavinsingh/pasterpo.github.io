@@ -83,3 +83,11 @@ After testing the live editor, the PDF export and preview were refined again:
 - Added a fit-to-preview pass inside the sandboxed compiled document so wide pages do not look broken or clipped after Compile.
 - Upgraded the visual design with a darker studio shell, signal-grid texture, stronger neon-accent controls, richer panel styling, and a small visual brand image.
 - Updated `smoke-test.js` to verify continuous PDF export is the default, smart paged export functions exist, and the preview fit script is present.
+
+## Scroll Refinement
+
+- Added visible styled scrollbar rails for the project rail, inspector, CodeMirror editor, and compiled preview.
+- Forced stable vertical scrollbar space where the app has scrollable panels.
+- Added mouse-wheel routing so scrolling over nested editor/sidebar surfaces moves the correct panel.
+- Added a wheel handler inside the sandboxed preview document.
+- Updated `smoke-test.js` to verify editor mouse-wheel scrolling works and preview wheel support is injected.

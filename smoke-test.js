@@ -126,12 +126,22 @@ async function main() {
     continuousExport: typeof exportContinuousPDF === 'function',
     pagedExport: typeof exportPagedPDF === 'function',
     smartBreaks: typeof smartBreaks === 'function',
+    wheelRouting: typeof installWheelRouting === 'function',
     sandbox: document.getElementById('pvdoc')?.getAttribute('sandbox') || '',
     sameOrigin: (document.getElementById('pvdoc')?.getAttribute('sandbox') || '').includes('allow-same-origin'),
     hasSrcdoc: !!document.getElementById('pvdoc')?.srcdoc,
     fitPreviewScript: (document.getElementById('pvdoc')?.srcdoc || '').includes('htmlleafFit'),
+    previewWheelScript: (document.getElementById('pvdoc')?.srcdoc || '').includes('htmlleafWheel'),
     localStorageBytes: (localStorage.getItem('htmlleaf.projects.v3') || '').length
   }))()`);
+  const editorWheelWorked = await evalExpr(`(() => {
+    const host = document.querySelector('.CodeMirror');
+    const scroller = document.querySelector('.CodeMirror-scroll');
+    if (!host || !scroller || scroller.scrollHeight <= scroller.clientHeight + 2) return true;
+    const before = scroller.scrollTop;
+    host.dispatchEvent(new WheelEvent('wheel', { deltaY: 600, bubbles: true, cancelable: true }));
+    return scroller.scrollTop > before;
+  })()`);
 
   await evalExpr("document.getElementById('pgori').value='landscape'; document.getElementById('pgori').dispatchEvent(new Event('change', { bubbles: true })); true");
   await sleep(1300);
@@ -150,10 +160,13 @@ async function main() {
   if (state.exportMode !== "continuous") failures.push("continuous PDF export is not the default");
   if (!state.continuousExport) failures.push("continuous PDF export function missing");
   if (!state.pagedExport || !state.smartBreaks) failures.push("smart paged PDF export functions missing");
+  if (!state.wheelRouting) failures.push("wheel routing function missing");
+  if (!editorWheelWorked) failures.push("mouse wheel did not scroll the editor");
   if (!state.cstatus.includes("Compiled")) failures.push("compile status did not update");
   if (state.sameOrigin) failures.push("iframe sandbox still allows same-origin");
   if (!state.hasSrcdoc) failures.push("preview srcdoc missing");
   if (!state.fitPreviewScript) failures.push("fit-preview script missing");
+  if (!state.previewWheelScript) failures.push("preview wheel script missing");
   if (state.localStorageBytes < 100) failures.push("local project storage missing");
   if (!pageSettingWorked) failures.push("page orientation/size did not affect preview");
   if (exceptions.length) failures.push("runtime exceptions: " + exceptions.join(" | "));
@@ -168,6 +181,7 @@ async function main() {
     failures,
     state,
     pageSettingWorked,
+    editorWheelWorked,
     exceptions,
     logs: logs.slice(0, 8),
     screenshotPath
