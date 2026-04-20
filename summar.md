@@ -91,3 +91,11 @@ After testing the live editor, the PDF export and preview were refined again:
 - Added mouse-wheel routing so scrolling over nested editor/sidebar surfaces moves the correct panel.
 - Added a wheel handler inside the sandboxed preview document.
 - Updated `smoke-test.js` to verify editor mouse-wheel scrolling works and preview wheel support is injected.
+
+## Scroll Bug Fix
+
+- Fixed the actual root cause of inert editor scrolling: CodeMirror was expanding to the full height of its content instead of staying constrained inside the grid panel.
+- Added explicit `min-height: 0` and fixed-height constraints for the workspace, editor panel, editor wrapper, CodeMirror, and CodeMirror scroll surface.
+- Added a narrow CodeMirror-only wheel bridge that uses CodeMirror's own `scrollTo` API.
+- Replaced the old synthetic wheel smoke check with real Chrome DevTools mouse-wheel input.
+- Latest real-wheel test moved the editor from scroll top `0` to `900`, confirming the mouse wheel scrolls the source editor.
