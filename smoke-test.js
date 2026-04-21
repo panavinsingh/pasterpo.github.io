@@ -123,6 +123,7 @@ async function main() {
     diag: document.getElementById('diag-summary')?.textContent || '',
     saveState: document.getElementById('save-state')?.textContent || '',
     cloudState: document.getElementById('cloud-state')?.textContent || '',
+    previewSurface: document.getElementById('pgsurface')?.value || '',
     exportMode: document.getElementById('pgexport')?.value || '',
     continuousExport: typeof exportContinuousPDF === 'function',
     pagedExport: typeof exportPagedPDF === 'function',
@@ -182,9 +183,9 @@ async function main() {
   })()`);
   const editorWheelWorked = editorWheelState.after > (Number(editorPoint.before) || 0);
 
-  await evalExpr("document.getElementById('pgori').value='landscape'; document.getElementById('pgori').dispatchEvent(new Event('change', { bubbles: true })); true");
+  await evalExpr("document.getElementById('pgsurface').value='page'; document.getElementById('pgsurface').dispatchEvent(new Event('change', { bubbles: true })); document.getElementById('pgori').value='landscape'; document.getElementById('pgori').dispatchEvent(new Event('change', { bubbles: true })); true");
   await sleep(1300);
-  const pageSettingWorked = await evalExpr("document.getElementById('pvdoc').srcdoc.includes('297mm') && document.getElementById('pvdoc').srcdoc.includes('210mm')");
+  const pageSettingWorked = await evalExpr("document.getElementById('pgsurface').value==='page' && document.getElementById('pvdoc').srcdoc.includes('297mm') && document.getElementById('pvdoc').srcdoc.includes('210mm')");
 
   const screenshot = await send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
   fs.writeFileSync(screenshotPath, Buffer.from(screenshot.data, "base64"));
@@ -196,6 +197,7 @@ async function main() {
   if (!state.katex) failures.push("KaTeX missing");
   if (state.localProjects < 1) failures.push("local starter project missing");
   if (state.templates < 3) failures.push("templates missing");
+  if (state.previewSurface !== "site") failures.push("full-page preview is not the default");
   if (state.exportMode !== "continuous") failures.push("continuous PDF export is not the default");
   if (!state.continuousExport) failures.push("continuous PDF export function missing");
   if (!state.pagedExport || !state.smartBreaks) failures.push("smart paged PDF export functions missing");

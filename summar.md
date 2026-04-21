@@ -121,3 +121,16 @@ After testing the live editor, the PDF export and preview were refined again:
 - Real wheel scroll: passed
 - Preview sandbox still excludes `allow-same-origin`
 - Screenshot refreshed: `smoke-test.png`
+
+## Full-Page Preview Fix
+
+- Changed the compiled preview default from a forced print-sheet frame to a full-page site canvas.
+- Added a `Preview surface` control with `Full page` and `Print sheet` modes. Default is now `Full page`.
+- Removed the decorative preview-stage border, padding, radius, and drop shadow that were making normal web pages feel trapped inside a frame.
+- Kept print-sheet preview available when needed for page-sized documents.
+- Added a targeted editorial polish pass for pages matching `The Mathematical Lie` markers:
+  - upgraded the title and heading font pairing
+  - replaced the muddy paper treatment with a cleaner editorial background
+  - removed the forced sheet framing from the preview/exported result
+- Updated HTML export so the downloaded HTML matches the improved preview/export appearance for that editorial page.
+- Updated `smoke-test.js` so it now expects full-page preview as the default and switches into print-sheet mode only for page-setting verification.
