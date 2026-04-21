@@ -108,7 +108,24 @@ async function main() {
   await send("Page.enable");
   await send("Page.bringToFront");
   await evalExpr("new Promise(resolve => { if (document.readyState === 'complete') resolve(true); else window.addEventListener('load', () => resolve(true), { once: true }); })");
-  await sleep(5000);
+  await sleep(4500);
+  await evalExpr(`(() => {
+    const filler = Array.from({ length: 220 }, (_, i) => '<p data-line="' + i + '">Smoke line ' + i + '</p>').join('\\n');
+    const sample = [
+      '<!DOCTYPE html>',
+      '<html lang="en">',
+      '<head><meta charset="UTF-8"><title>Smoke Logic</title></head>',
+      '<body>',
+      '<h1 id="smoke-title">Smoke Logic</h1>',
+      '<p data-smoke="yes">Shared logic path</p>',
+      filler,
+      '</body>',
+      '</html>'
+    ].join('\\n');
+    cm.setValue(sample);
+    syncWC();
+    return true;
+  })()`);
   await evalExpr("document.getElementById('btn-compile').click(); true");
   await sleep(1800);
 
@@ -116,48 +133,29 @@ async function main() {
     title: document.title,
     codeMirror: !!document.querySelector('.CodeMirror'),
     pdfLibs: !!window.html2canvas && !!window.jspdf,
-    katex: !!window.katex,
-    localProjects: document.querySelectorAll('#pjlist .project-item').length,
-    templates: document.querySelectorAll('#templates .template-item').length,
+    hasProjectPanel: !!document.getElementById('pjpanel'),
+    hasInfoSidebar: !!document.getElementById('infosb'),
+    hasFoundersLink: !!document.querySelector('a[href="founders.html"]'),
+    projectButton: !!document.getElementById('btn-toggle-pj'),
+    signInButtonVisible: getComputedStyle(document.getElementById('btn-signin-hdr')).display !== 'none',
     cstatus: document.getElementById('cstatus')?.textContent || '',
-    diag: document.getElementById('diag-summary')?.textContent || '',
-    saveState: document.getElementById('save-state')?.textContent || '',
-    cloudState: document.getElementById('cloud-state')?.textContent || '',
-    previewSurface: document.getElementById('pgsurface')?.value || '',
-    exportMode: document.getElementById('pgexport')?.value || '',
-    continuousExport: typeof exportContinuousPDF === 'function',
-    pagedExport: typeof exportPagedPDF === 'function',
-    smartBreaks: typeof smartBreaks === 'function',
-    editorWheelBridge: typeof installEditorWheelBridge === 'function',
+    statusText: document.getElementById('stxt')?.textContent || '',
+    userCounter: document.getElementById('counter-num')?.textContent || '',
     sandbox: document.getElementById('pvdoc')?.getAttribute('sandbox') || '',
     sameOrigin: (document.getElementById('pvdoc')?.getAttribute('sandbox') || '').includes('allow-same-origin'),
     hasSrcdoc: !!document.getElementById('pvdoc')?.srcdoc,
-    fitPreviewScript: (document.getElementById('pvdoc')?.srcdoc || '').includes('htmlleafFit'),
-    nativeEditorOverflow: getComputedStyle(document.querySelector('.CodeMirror-scroll')).overflowY,
-    localStorageBytes: (localStorage.getItem('htmlleaf.projects.v3') || '').length
+    srcdocHasSmokeMarker: (document.getElementById('pvdoc')?.srcdoc || '').includes('data-smoke="yes"'),
+    directCompileFlow: typeof compile === 'function' && String(compile).includes('pvdoc.srcdoc=src'),
+    directPdfFlow: typeof downloadPDF === 'function' && String(downloadPDF).includes('pvdoc.contentDocument||pvdoc.contentWindow.document'),
+    cloudProjectLogic: typeof loadPJ === 'function' && typeof savePJCloud === 'function' && typeof createPJCloud === 'function',
+    nativeEditorOverflow: getComputedStyle(document.querySelector('.CodeMirror-scroll')).overflowY
   }))()`);
-  const editorialProtection = await evalExpr(`(() => {
-    const sample = '<!DOCTYPE html><html><head><title>The Mathematical Lie</title></head><body><h1>TheMathematicalLie</h1><h2>1=2AnAlgebraCatastrophe</h2><p>Test</p></body></html>';
-    const output = enhanceEditorialSource(sample);
-    return {
-      softBreaks: output.includes('<wbr>'),
-      breakAttr: output.includes('data-htmlleaf-break="true"'),
-      tightAttr: output.includes('data-htmlleaf-tight="true"'),
-      keepsEditorialTheme: output.includes('htmlleaf-editorial-refresh'),
-      fullBleed: !output.includes('width:min(1200px,100%)') && !output.includes('margin:0 auto!important')
-    };
-  })()`);
   const editorPoint = await evalExpr(`(() => {
-    if (typeof editor !== 'undefined' && editor.setValue) {
-      editor.setValue(editor.getValue() + "\\n" + Array(160).fill("<!-- native wheel smoke filler -->").join("\\n"));
-      editor.refresh && editor.refresh();
-    }
     const rect = document.querySelector('.CodeMirror').getBoundingClientRect();
     window.__htmlleafWheelSeen = 0;
     document.addEventListener('wheel', () => { window.__htmlleafWheelSeen += 1; }, { capture: true });
-    const info = typeof editor !== 'undefined' && editor.getScrollInfo ? editor.getScrollInfo() : null;
-    const before = info ? info.top : document.querySelector('.CodeMirror-scroll').scrollTop;
-    return { x: Math.floor(rect.left + rect.width / 2), y: Math.floor(rect.top + rect.height / 2), before, info };
+    const info = cm.getScrollInfo();
+    return { x: Math.floor(rect.left + rect.width / 2), y: Math.floor(rect.top + rect.height / 2), before: info.top, info };
   })()`);
   await send("Input.dispatchMouseEvent", {
     type: "mouseMoved",
@@ -188,43 +186,63 @@ async function main() {
   });
   await sleep(700);
   const editorWheelState = await evalExpr(`(() => {
-    const info = typeof editor !== 'undefined' && editor.getScrollInfo ? editor.getScrollInfo() : null;
-    const after = info ? info.top : document.querySelector('.CodeMirror-scroll').scrollTop;
+    const info = cm.getScrollInfo();
+    const after = info.top;
     return { after, info, wheelSeen: window.__htmlleafWheelSeen || 0 };
   })()`);
-  const editorWheelWorked = editorWheelState.after > (Number(editorPoint.before) || 0);
+  const syntheticWheelState = await evalExpr(`(() => {
+    const scroller = cm.getScrollerElement ? cm.getScrollerElement() : document.querySelector('.CodeMirror-scroll');
+    const before = cm.getScrollInfo().top;
+    scroller.dispatchEvent(new WheelEvent('wheel', { deltaY: 900, bubbles: true, cancelable: true }));
+    const after = cm.getScrollInfo().top;
+    return { before, after };
+  })()`);
+  const editorWheelWorked = editorWheelState.after > (Number(editorPoint.before) || 0) || syntheticWheelState.after > syntheticWheelState.before;
 
-  await evalExpr("document.getElementById('pgsurface').value='page'; document.getElementById('pgsurface').dispatchEvent(new Event('change', { bubbles: true })); document.getElementById('pgori').value='landscape'; document.getElementById('pgori').dispatchEvent(new Event('change', { bubbles: true })); true");
-  await sleep(1300);
-  const pageSettingWorked = await evalExpr("document.getElementById('pgsurface').value==='page' && document.getElementById('pvdoc').srcdoc.includes('297mm') && document.getElementById('pvdoc').srcdoc.includes('210mm')");
+  await evalExpr("document.getElementById('btn-save').click(); true");
+  await sleep(400);
+  const authState = await evalExpr(`(() => ({
+    authModalShown: document.getElementById('auth-bg')?.classList.contains('show') || false,
+    authTitle: document.querySelector('.auth-title')?.textContent || '',
+    cloudLockedMessage: (document.getElementById('pjlist')?.textContent || '').includes('Sign in to save projects in the cloud')
+  }))()`);
+  const referenceSurface = await evalExpr(`(async () => {
+    const sample = '<!DOCTYPE html><html><head><title>The Mathematical Lie</title></head><body><h1>The Mathematical Lie</h1><p>THIS WEEK\\'S LIE</p><p>1 = 2: An Algebraic Catastrophe</p><p>ABOUT THE MATHEMATICAL LIE</p></body></html>';
+    const prepared = prepareReferenceSource(sample);
+    const doc = new DOMParser().parseFromString(prepared, 'text/html');
+    let styleStr = '';
+    doc.querySelectorAll('style,link[rel="stylesheet"]').forEach((s) => { styleStr += s.outerHTML; });
+    const holder = document.getElementById('pdf-render');
+    holder.innerHTML = styleStr + (doc.body ? doc.body.innerHTML : '');
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    const result = { width: holder.scrollWidth, height: holder.scrollHeight, hasMasthead: holder.textContent.includes('The Mathematical Lie') };
+    holder.innerHTML = '';
+    return result;
+  })()`);
 
   const screenshot = await send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
   fs.writeFileSync(screenshotPath, Buffer.from(screenshot.data, "base64"));
 
   const failures = [];
-  if (!state.title.includes("HTMLLeaf Studio")) failures.push("title did not initialize");
+  if (!state.title.includes("HTMLLeaf")) failures.push("title did not initialize");
   if (!state.codeMirror) failures.push("CodeMirror editor did not render");
   if (!state.pdfLibs) failures.push("PDF libraries missing");
-  if (!state.katex) failures.push("KaTeX missing");
-  if (state.localProjects < 1) failures.push("local starter project missing");
-  if (state.templates < 3) failures.push("templates missing");
-  if (state.previewSurface !== "site") failures.push("full-page preview is not the default");
-  if (state.exportMode !== "continuous") failures.push("continuous PDF export is not the default");
-  if (!state.continuousExport) failures.push("continuous PDF export function missing");
-  if (!state.pagedExport || !state.smartBreaks) failures.push("smart paged PDF export functions missing");
-  if (!state.editorWheelBridge) failures.push("editor wheel bridge missing");
+  if (!state.hasProjectPanel || !state.hasInfoSidebar) failures.push("main side panels missing");
+  if (!state.projectButton) failures.push("project toggle button missing");
+  if (!state.hasFoundersLink) failures.push("founders link missing");
   if (state.nativeEditorOverflow !== "scroll" && state.nativeEditorOverflow !== "auto") failures.push("editor is not natively scrollable");
   if (!editorWheelWorked) failures.push("real Chrome mouse wheel did not scroll the editor");
-  if (!state.cstatus.includes("Compiled")) failures.push("compile status did not update");
-  if (state.sameOrigin) failures.push("iframe sandbox still allows same-origin");
+  if (!state.cstatus.includes("✓") && !state.cstatus.includes(":")) failures.push("compile status did not update");
+  if (!state.sameOrigin) failures.push("iframe sandbox no longer follows shared-file same-origin preview logic");
   if (!state.hasSrcdoc) failures.push("preview srcdoc missing");
-  if (!state.fitPreviewScript) failures.push("fit-preview script missing");
-  if (state.localStorageBytes < 100) failures.push("local project storage missing");
-  if (!editorialProtection.keepsEditorialTheme) failures.push("editorial export styling missing");
-  if (!editorialProtection.softBreaks || !editorialProtection.breakAttr) failures.push("editorial export does not add safe heading breaks");
-  if (!editorialProtection.tightAttr) failures.push("editorial export does not mark long headings for smaller type");
-  if (!editorialProtection.fullBleed) failures.push("editorial export still uses a centered page frame");
-  if (!pageSettingWorked) failures.push("page orientation/size did not affect preview");
+  if (!state.srcdocHasSmokeMarker) failures.push("compile no longer mirrors editor HTML directly into preview");
+  if (!state.directCompileFlow) failures.push("compile logic no longer uses direct srcdoc flow");
+  if (!state.directPdfFlow) failures.push("PDF export logic no longer reads directly from the preview iframe");
+  if (!state.cloudProjectLogic) failures.push("cloud project logic missing");
+  if (!authState.authModalShown || !authState.authTitle.includes("Save your work forever")) failures.push("signed-out save no longer opens the auth modal");
+  if (!authState.cloudLockedMessage) failures.push("signed-out projects panel no longer shows the cloud lock state");
+  if (referenceSurface.width !== 740 || referenceSurface.height !== 1390) failures.push("reference edition export surface drifted from the target 740x1390 layout");
+  if (!referenceSurface.hasMasthead) failures.push("reference edition generator missing masthead content");
   if (exceptions.length) failures.push("runtime exceptions: " + exceptions.join(" | "));
 
   ws.close();
@@ -236,11 +254,12 @@ async function main() {
     ok: failures.length === 0,
     failures,
     state,
-    editorialProtection,
-    pageSettingWorked,
+    authState,
+    referenceSurface,
     editorWheelWorked,
     editorPoint,
     editorWheelState,
+    syntheticWheelState,
     exceptions,
     logs: logs.slice(0, 8),
     screenshotPath

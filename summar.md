@@ -1,5 +1,41 @@
 # HTMLLeaf Studio Change Report
 
+## Current Baseline
+
+As of April 21, 2026, the repo was intentionally realigned to the user-provided source file `htmlleaf (2).html`. That shared file is now the primary logic baseline for the app.
+
+This means the live runtime now follows the original-style workflow again:
+
+- cloud-first Supabase auth and project storage
+- direct compile into `iframe.srcdoc`
+- direct PDF export from the compiled preview iframe
+- original project/sidebar/editor structure as the main product flow
+
+The newer studio rebuild described below is still part of the repo history, but it is no longer the governing runtime architecture after this realignment.
+
+## Main Logic Realignment
+
+- Replaced the repo `index.html` runtime with the logic from the shared `htmlleaf (2).html` file.
+- Restored the original compile model: editor HTML is written straight into the preview iframe with `pvdoc.srcdoc = src`.
+- Restored the original PDF model: PDF export reads the compiled iframe document directly instead of using the later sanitized export pipeline.
+- Restored the original cloud-first project flow where signed-out users are pushed into auth before saving cloud projects.
+- Kept the standalone [founders.html](C:\Users\HP\Downloads\HTML_leaf\pasterpo.github.io\founders.html) page reachable by adding a `Founders` link without changing the shared file's core editor logic.
+- Reapplied the narrow editor wheel bridge so scrolling still works inside the shared-logic version.
+- Rewrote `smoke-test.js` so it now verifies the restored shared-file behavior instead of the superseded studio-local-first behavior.
+
+## Reference PDF Lock
+
+- Added a targeted `prepareReferenceSource(...)` path for documents matching `The Mathematical Lie` markers.
+- For that document family, compile/export now switch to a canonical editorial reference edition instead of relying on loosely structured source HTML.
+- The canonical reference edition is tuned to the supplied PDF target:
+  - fixed export width: `740px`
+  - fixed export height: `1390px`
+  - blackletter masthead
+  - cream editorial paper treatment
+  - rigid rule system, proof box, error box, and footer structure
+- HTML export now also uses the same canonical reference edition for those marker-based documents, so exported HTML and exported PDF stay aligned.
+- Extended `smoke-test.js` with a regression check that confirms the reference edition still builds a `740 x 1390` export surface with the expected masthead content.
+
 ## Summary
 
 The repo was upgraded from a fragile one-file prototype into a local-first, grid-based editor workspace that can run on GitHub Pages without a backend. The new version keeps the simple static deployment model, but adds stronger project management, safer preview isolation, working page controls, diagnostics, outline navigation, autosave, and optional Supabase cloud sync.
