@@ -136,6 +136,17 @@ async function main() {
     nativeEditorOverflow: getComputedStyle(document.querySelector('.CodeMirror-scroll')).overflowY,
     localStorageBytes: (localStorage.getItem('htmlleaf.projects.v3') || '').length
   }))()`);
+  const editorialProtection = await evalExpr(`(() => {
+    const sample = '<!DOCTYPE html><html><head><title>The Mathematical Lie</title></head><body><h1>TheMathematicalLie</h1><h2>1=2AnAlgebraCatastrophe</h2><p>Test</p></body></html>';
+    const output = enhanceEditorialSource(sample);
+    return {
+      softBreaks: output.includes('<wbr>'),
+      breakAttr: output.includes('data-htmlleaf-break="true"'),
+      tightAttr: output.includes('data-htmlleaf-tight="true"'),
+      keepsEditorialTheme: output.includes('htmlleaf-editorial-refresh'),
+      fullBleed: !output.includes('width:min(1200px,100%)') && !output.includes('margin:0 auto!important')
+    };
+  })()`);
   const editorPoint = await evalExpr(`(() => {
     if (typeof editor !== 'undefined' && editor.setValue) {
       editor.setValue(editor.getValue() + "\\n" + Array(160).fill("<!-- native wheel smoke filler -->").join("\\n"));
@@ -209,6 +220,10 @@ async function main() {
   if (!state.hasSrcdoc) failures.push("preview srcdoc missing");
   if (!state.fitPreviewScript) failures.push("fit-preview script missing");
   if (state.localStorageBytes < 100) failures.push("local project storage missing");
+  if (!editorialProtection.keepsEditorialTheme) failures.push("editorial export styling missing");
+  if (!editorialProtection.softBreaks || !editorialProtection.breakAttr) failures.push("editorial export does not add safe heading breaks");
+  if (!editorialProtection.tightAttr) failures.push("editorial export does not mark long headings for smaller type");
+  if (!editorialProtection.fullBleed) failures.push("editorial export still uses a centered page frame");
   if (!pageSettingWorked) failures.push("page orientation/size did not affect preview");
   if (exceptions.length) failures.push("runtime exceptions: " + exceptions.join(" | "));
 
@@ -221,6 +236,7 @@ async function main() {
     ok: failures.length === 0,
     failures,
     state,
+    editorialProtection,
     pageSettingWorked,
     editorWheelWorked,
     editorPoint,

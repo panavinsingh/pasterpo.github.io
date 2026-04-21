@@ -134,3 +134,28 @@ After testing the live editor, the PDF export and preview were refined again:
   - removed the forced sheet framing from the preview/exported result
 - Updated HTML export so the downloaded HTML matches the improved preview/export appearance for that editorial page.
 - Updated `smoke-test.js` so it now expects full-page preview as the default and switches into print-sheet mode only for page-setting verification.
+
+## Editorial Overlap Fix
+
+- Hardened the targeted editorial export pass after a real PDF overlap bug was reported on long masthead text.
+- Replaced the unstable decorative heading treatment with a safer export font stack:
+  - body copy uses Arial/Helvetica
+  - headings use Georgia/Times
+- Disabled ligatures, kerning tricks, and layout behavior that made some long titles render on top of themselves during PDF capture.
+- Added automatic safe-wrap handling for long editorial headings:
+  - headings now force normal wrapping
+  - long single-token or CamelCase titles get soft break opportunities via `<wbr>`
+  - long headings are marked for a smaller headline size during export
+- Removed the forced centered editorial sheet from the full-page export styling.
+- The editorial pass now uses a full-bleed body/background instead of a fixed-width `1200px` paper wrapper with auto margins.
+- Added a regression check to `smoke-test.js` to confirm editorial exports keep the styling pass and inject safe heading breaks for titles like `TheMathematicalLie` and `1=2AnAlgebraCatastrophe`.
+
+## Latest Verification
+
+- Re-ran `node smoke-test.js` after the editorial overlap fix.
+- Result: passed with no failures.
+- Editorial export protection:
+  - safe heading breaks injected: yes
+  - long-heading size protection injected: yes
+  - editorial style block present: yes
+  - centered page frame removed: yes
