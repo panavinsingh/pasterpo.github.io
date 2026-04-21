@@ -99,3 +99,25 @@ After testing the live editor, the PDF export and preview were refined again:
 - Added a narrow CodeMirror-only wheel bridge that uses CodeMirror's own `scrollTo` API.
 - Replaced the old synthetic wheel smoke check with real Chrome DevTools mouse-wheel input.
 - Latest real-wheel test moved the editor from scroll top `0` to `900`, confirming the mouse wheel scrolls the source editor.
+
+## UI Refresh And Exact Export
+
+- Refreshed the studio shell with a stronger multi-layer grid treatment, warmer accent mix, deeper panel framing, and clearer preview presentation.
+- Added a live studio summary card in the project rail so document count, template count, issue count, and PDF mode are visible at a glance.
+- Added a dedicated `Founders` link in the top bar and created a standalone `founders.html` page.
+- Added a built-in `Founders page` template so the same content structure is available directly inside the editor.
+- Kept Rudra and Panavin visually equal on the founders page by using the same component, size, and hierarchy for both profiles.
+- Changed the PDF export path so continuous export renders through an isolated sanitized export iframe instead of a padded hidden div. This preserves the original "capture the document itself" feel more closely and avoids baking extra outer borders into the exported PDF.
+- Preserved paged export while allowing `Margin mm` to go down to `0` for edge-to-edge layouts.
+- Preserved body and html attributes during preview and export generation so class-based and inline body styling survive more reliably.
+
+## Latest Verification
+
+- Re-ran `node smoke-test.js` after the UI and export changes.
+- Result: passed with no runtime exceptions.
+- CodeMirror rendered: yes
+- Templates loaded: 4
+- Continuous export default: yes
+- Real wheel scroll: passed
+- Preview sandbox still excludes `allow-same-origin`
+- Screenshot refreshed: `smoke-test.png`

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTMLLeaf Founders</title>
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:root{--bg:#080b0c;--panel:#111715;--panel-2:#18211e;--line:#2f3a35;--ink:#f5f7f2;--muted:#a2afa8;--accent:#27d0ad;--accent-2:#ffca58;--accent-3:#ff7b5c}
+html,body{margin:0;min-height:100%;font-family:Inter,"Segoe UI",system-ui,-apple-system,BlinkMacSystemFont,sans-serif;background:radial-gradient(circle at top left,rgba(39,208,173,.08),transparent 30%),radial-gradient(circle at top right,rgba(255,123,92,.08),transparent 26%),var(--bg);color:var(--ink)}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(39,208,173,.08) 1px,transparent 1px),linear-gradient(180deg,rgba(255,202,88,.055) 1px,transparent 1px),linear-gradient(135deg,rgba(255,123,92,.08),transparent 42%,rgba(39,208,173,.04));background-size:34px 34px,34px 34px,100% 100%;opacity:.94}
+.page{position:relative;max-width:1240px;margin:0 auto;padding:28px 24px 48px}
+.frame{border:1px solid rgba(255,255,255,.06);background:linear-gradient(180deg,rgba(10,14,13,.92),rgba(8,11,12,.98));box-shadow:0 32px 80px rgba(0,0,0,.38)}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 22px;border-bottom:1px solid var(--line);background:linear-gradient(90deg,#0f1413,#18201d)}
+.brand{display:flex;align-items:center;gap:12px}
+.mark{width:40px;height:40px;border-radius:8px;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#08100c;font-weight:900;box-shadow:0 0 28px rgba(39,208,173,.24)}
+.title{font-weight:800;font-size:18px}
+.sub{font-size:12px;color:var(--muted);margin-top:2px}
+.back{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:0 12px;border-radius:8px;border:1px solid #44514b;background:rgba(255,255,255,.03);color:var(--ink);text-decoration:none}
+.hero{padding:42px 22px 24px}
+.eyebrow{display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border-radius:999px;border:1px solid rgba(255,202,88,.26);background:rgba(255,202,88,.1);color:#ffe4a1;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+h1{max-width:900px;font-size:clamp(38px,6vw,74px);line-height:.94;margin:18px 0 14px}
+.lede{max-width:860px;font-size:19px;line-height:1.65;color:#c9d4cd;margin:0}
+.founders{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;padding:8px 22px 22px}
+.founder{position:relative;padding:28px;border:1px solid rgba(255,255,255,.08);border-radius:8px;background:linear-gradient(180deg,rgba(22,29,26,.94),rgba(11,15,13,.96));min-height:360px}
+.founder::before{content:"";position:absolute;inset:0;pointer-events:none;border-radius:8px;background:linear-gradient(135deg,rgba(39,208,173,.08),transparent 44%,rgba(255,202,88,.06))}
+.label{position:relative;display:inline-flex;align-items:center;min-height:24px;padding:0 8px;border-radius:999px;border:1px solid rgba(39,208,173,.26);background:rgba(39,208,173,.12);font-size:11px;font-weight:800;text-transform:uppercase;color:#b6fff0}
+.name{position:relative;font-size:34px;font-weight:800;margin:18px 0 8px}
+.role{position:relative;font-size:16px;color:#ffe4a1;margin-bottom:18px}
+.body-copy{position:relative;font-size:16px;line-height:1.7;color:#d6dfd9}
+.split{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;padding:0 22px 28px}
+.facet{padding:16px;border:1px solid rgba(255,255,255,.07);border-radius:8px;background:rgba(255,255,255,.03)}
+.facet strong{display:block;font-size:14px;margin-bottom:8px}
+.facet p{margin:0;color:#c7d3cb;line-height:1.6}
+.footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 22px;border-top:1px solid var(--line);color:var(--muted);font-size:12px}
+@media(max-width:860px){.founders,.split{grid-template-columns:1fr}.hero{padding-top:34px}.founder{min-height:auto}}
+</style>
+</head>
+<body>
+  <main class="page">
+    <section class="frame">
+      <header class="topbar">
+        <div class="brand">
+          <div class="mark">HL</div>
+          <div>
+            <div class="title">HTMLLeaf Studio</div>
+            <div class="sub">Founders page</div>
+          </div>
+        </div>
+        <a class="back" href="./index.html">Back to Studio</a>
+      </header>
+
+      <section class="hero">
+        <span class="eyebrow">Co-founders</span>
+        <h1>Rudra and Panavin are building the studio together, with equal weight.</h1>
+        <p class="lede">This page keeps both founders on the same visual footing. Same hierarchy, same real estate, same structure. No sidekick framing, no implied lead founder, no unequal treatment.</p>
+      </section>
+
+      <section class="founders">
+        <article class="founder">
+          <span class="label">Rudra</span>
+          <div class="name">Rudra</div>
+          <div class="role">Product direction, taste, and publishing vision</div>
+          <div class="body-copy">Rudra pushes HTMLLeaf toward a sharper creative standard: faster writing, cleaner page composition, and output that feels serious enough for research notes, editorials, and professional publishing.</div>
+        </article>
+        <article class="founder">
+          <span class="label">Panavin</span>
+          <div class="name">Panavin</div>
+          <div class="role">Engineering systems, execution, and product buildout</div>
+          <div class="body-copy">Panavin carries the system work that turns the idea into an actual product: editor behavior, export fidelity, app structure, and the engineering discipline needed to make the studio reliable.</div>
+        </article>
+      </section>
+
+      <section class="split">
+        <article class="facet">
+          <strong>Shared mission</strong>
+          <p>Make HTML-native publishing feel powerful, visual, and usable by default.</p>
+        </article>
+        <article class="facet">
+          <strong>Shared standard</strong>
+          <p>Deliver output that can stand beside heavier writing tools without forcing heavier workflows.</p>
+        </article>
+        <article class="facet">
+          <strong>Shared build</strong>
+          <p>Design, product, and engineering moving in lockstep instead of acting like separate projects.</p>
+        </article>
+      </section>
+
+      <footer class="footer">
+        <span>Equal founders presentation for Rudra and Panavin</span>
+        <span>HTMLLeaf Studio</span>
+      </footer>
+    </section>
+  </main>
+</body>
+</html>
